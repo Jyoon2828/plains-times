@@ -1,0 +1,74 @@
+{
+  "id": "daejeon-gapcheon-1970-2021",
+  "title": "대전 갑천 주변의 변화",
+  "area": "대전광역시 갑천 주변 · 도룡동·만년동 일대",
+  "type": "연도별 항공사진(지도기호로 표현한 지도 아님)",
+  "publisher": "대전광역시 공간정보포털",
+  "sourceUrl": "https://gis.daejeon.go.kr/ispmap.do?menu_cde=menu004",
+  "serviceDescriptionUrl": "https://gis.daejeon.go.kr/introMapService.do",
+  "configurationSourceUrl": "https://gis.daejeon.go.kr/lib/o2map/config/o2AirPhoto.js",
+  "crs": "EPSG:5186",
+  "bbox": [
+    233000,
+    418600,
+    236600,
+    421150
+  ],
+  "width": 1200,
+  "height": 850,
+  "north": "up",
+  "extentMeters": {
+    "width": 3600,
+    "height": 2550
+  },
+  "images": [
+    {
+      "year": 1970,
+      "file": "daejeon-1970.jpg",
+      "sha256": "1319ad2b9f9d6e0dc530aa2d797a4595e3ab09bd592cf8f1ab78594f1e529b67",
+      "sizeBytes": 407383,
+      "sourceLayer": "51cm/1970/3",
+      "tileUrls": [
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/51cm/1970/3/7/11.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/51cm/1970/3/8/11.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/51cm/1970/3/7/12.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/51cm/1970/3/8/12.png"
+      ]
+    },
+    {
+      "year": 2021,
+      "file": "daejeon-2021.jpg",
+      "sha256": "f29466ad7085031be62fb162d1dbe87ac1a779bba8e1b4b38f3d0846208af8d4",
+      "sizeBytes": 489060,
+      "sourceLayer": "25cm/2021/4",
+      "tileUrls": [
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/6/10.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/7/10.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/8/10.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/6/11.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/7/11.png",
+        "https://gis.daejeon.go.kr/proxy/proxy.jsp?url=o2mapTile/04.AIRM/25cm/2021/4/8/11.png"
+      ]
+    }
+  ],
+  "yearNote": "연도는 원출처의 연도별 항공사진 레이어명 기준. 개별 촬영일은 확인되지 않음. 2021년 자료를 2026년 현재 촬영 자료로 표시하지 않음.",
+  "alignmentNote": "원출처 EPSG:5186 타일의 원점·해상도에 따라 동일한 실제 범위를 잘라 같은 1200×850 크기로 리샘플링함. 원본 항공사진의 정합 오차는 남을 수 있음.",
+  "processing": "공개된 타일 이어붙이기, 동일 범위 자르기, 크기 조절, JPEG 저장. 건물·농경지·하천 등 내용은 추가·삭제하거나 생성하지 않음.",
+  "observations": [
+    "1970년 영상의 아래쪽에는 작은 구획이 이어진 넓은 농경지 형태가 보이며, 2021년 같은 범위에는 건물·도로와 공원 형태가 보인다.",
+    "2021년에는 하천을 가로지르는 여러 다리와 연결 도로가 보인다.",
+    "산지의 굴곡과 하천이 지나는 대략적 위치를 두 영상의 같은 장소를 찾는 기준으로 사용할 수 있다."
+  ],
+  "studentPrompts": [
+    "두 사진에서 같은 장소를 찾을 때 기준으로 삼을 수 있는 것은 무엇인가요?",
+    "땅의 쓰임이 달라진 것으로 보이는 곳에 표시하고, 두 사진에서 본 모습을 각각 적어 보세요.",
+    "길과 다리의 모습을 비교해 보세요. 사진으로 확인할 수 있는 사실은 무엇인가요?"
+  ],
+  "interpretationLimits": [
+    "사진의 색 차이만으로 땅의 쓰임 변화라고 판단하지 않음.",
+    "건물의 정확한 이름·용도와 인구 변화는 항공사진만으로 확정하지 않음.",
+    "모든 들 지역이 같은 모습으로 변한 것은 아님."
+  ],
+  "rightsNote": "원출처 저작권 표시는 COPYRIGHT 2019 DAEJEON METROPOLITAN CITY. ALL RIGHTS RESERVED. 개별 항공사진의 공공누리/CC 이용허락 표시는 확인되지 않았으므로 자유이용허락 자료라고 표기하지 않음.",
+  "retrievedAt": "2026-10-29"
+}
