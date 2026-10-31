@@ -1,0 +1,92 @@
+{
+  "retrievedAt": "2026-10-29",
+  "items": [
+    {
+      "id": "rice-hand-1989",
+      "file": "rice-hand-1989.jpg",
+      "type": "image",
+      "title": "모내기",
+      "place": "경기도 김포",
+      "date": "1989-05-19",
+      "year": 1989,
+      "yearType": "촬영일",
+      "creator": "촬영자 미상",
+      "provider": "문화체육관광부 e영상역사관",
+      "recordId": "PG-1989-0358-003",
+      "sourceUrl": "https://www.ehistory.go.kr/view/photo?mediadtl=105207&mediagbn=PG&mediaid=12634&mediasrcgbn=PT",
+      "assetUrl": "https://www.ehistory.go.kr/photo_pds/PG-%EC%B4%9D%EB%A6%AC+%EC%9D%BC%EB%B0%98/PG-1989/%EC%B9%BC%EB%9D%BC/PG-1989-0358/1200dpi/PG-1989-0358-003.jpg",
+      "license": "공공누리 제4유형: 출처표시 + 상업적 이용금지 + 변경금지",
+      "licenseUrl": "https://www.kogl.or.kr/info/licenseType4.do",
+      "licenseEvidence": "ehistory-old.html 본문 모내기 작품에 개별 공공누리 제4유형 표시. 동일 촬영일·장소 관련사진8장 중3번째 선택.",
+      "changes": "원본 파일 그대로(자르기·색 변경·재압축 없음). HTML에서 전체 비율 유지 축소 표시. 관찰 표시는 별도의 HTML 요소로 표시.",
+      "observation": "여러 사람이 줄지어 허리를 굽혀 손으로 모를 심는다. 물이 담긴 논에 모가 줄지어 심겨 있다.",
+      "note": "2022 영상과 동일 장소의 시계열 자료는 아님. 우리나라 농사 모습의 사례 비교로 표기."
+    },
+    {
+      "id": "rice-machine-2022",
+      "file": "rice-machine-2022.mp4",
+      "poster": "rice-machine-2022.jpg",
+      "type": "video",
+      "title": "벼 드문모 심기 재배기술 - 3. 모내기",
+      "place": "촬영지 미표기",
+      "year": 2022,
+      "yearType": "제작연도",
+      "producer": "농촌진흥청",
+      "cooperatingInstitution": "국립식량과학원",
+      "sourceUrl": "https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpClipNo=3&mvpNo=823",
+      "playerUrl": "https://www.nongsaro.go.kr/portal/wenMedia/player.jsp?type=vod&frmId=ifrm&width=100%25&autoStart=N&id=4f7dcc2c-ba66-4477-8874-aabcbfb23d72",
+      "license": "공공누리 제2유형: 출처표시 + 상업적 이용금지",
+      "licenseUrl": "https://www.kogl.or.kr/info/licenseType2.do",
+      "licenseEvidence": "rice.html openGradeImg/openGradeTitle에 개별 제2유형 표시 확인",
+      "clip": {
+        "startSeconds": 34,
+        "endSeconds": 59,
+        "durationSeconds": 25
+      },
+      "changes": "원본 34~59초 발췌, 무음 처리, 640×360으로 재압축. 원본 화면의 로고와 자막 유지.",
+      "observation": "이앙기를 탄 사람이 논에서 모를 심는다. 기계 뒤쪽의 모판과 줄지어 심기는 모를 관찰한다.",
+      "note": "전문 수치 설명은 학생 활동에 요구하지 않음. 다른 지역 사례 비교.",
+      "publicStreamUrl": "https://rvod.rda.go.kr:9443/_vstreams_/7df25851-29bb-48ce-b3ed-12d715903294/2024/06/06/4f7dcc2c-ba66-4477-8874-aabcbfb23d72/d0db9cdb-eae0-4c33-ad58-2cdda1c5aeb0.mp4?f=4f7dcc2c-ba66-4477-8874-aabcbfb23d72&s=24",
+      "posterSourceSeconds": 50
+    },
+    {
+      "id": "greenhouse-2017",
+      "file": "greenhouse-2017.mp4",
+      "poster": "greenhouse-2017.jpg",
+      "type": "video",
+      "title": "ICT융복합 스마트팜 장비 표준화",
+      "place": "온실 관찰 사례(94~106초 구간은 충청남도 부여 토마토 온실)",
+      "year": 2017,
+      "yearType": "제작연도",
+      "producer": "농촌진흥청",
+      "cooperatingInstitution": "국립농업과학원",
+      "sourceUrl": "https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpNo=1285",
+      "playerUrl": "https://www.nongsaro.go.kr/portal/wenMedia/player.jsp?type=vod&frmId=ifrm&width=100%25&autoStart=N&id=f2283e92-0361-4d49-97ab-c9868b69ad7b",
+      "license": "공공누리 제2유형: 출처표시 + 상업적 이용금지",
+      "licenseUrl": "https://www.kogl.or.kr/info/licenseType2.do",
+      "licenseEvidence": "greenhouse-modern.html openGradeImg/openGradeTitle에 개별 제2유형 표시 확인",
+      "clip": {
+        "segments": [
+          {
+            "startSeconds": 34,
+            "endSeconds": 43
+          },
+          {
+            "startSeconds": 83.5,
+            "endSeconds": 85.5
+          },
+          {
+            "startSeconds": 94,
+            "endSeconds": 106
+          }
+        ],
+        "durationSeconds": 23
+      },
+      "changes": "원본 34~43초(작물 곁의 측정 장치·온실), 83.5~85.5초(물 공급 관), 94~106초(부여 토마토 온실 통로) 장면을 순서대로 이어 붙인 23초 관찰 영상. 무음 처리, 640×360 재압축. 원본 화면 로고와 자막 유지.",
+      "observation": "온실 안에서 토마토가 자라는 줄, 물을 공급하는 관, 통로와 지붕 구조 등을 관찰한다.",
+      "note": "여러 온실 관찰 장면을 발췌했으며, 원문에서 지역이 확인되는 마지막 토마토 통로 장면은 충남 부여 사례. 모든 온실이 스마트팜인 것은 아님.",
+      "publicStreamUrl": "https://rvod.rda.go.kr:9443/_vstreams_/7df25851-29bb-48ce-b3ed-12d715903294/2024/06/03/f2283e92-0361-4d49-97ab-c9868b69ad7b/be618b05-afb3-43c0-9df2-f295e2cdcfd1.mp4?f=f2283e92-0361-4d49-97ab-c9868b69ad7b&s=24",
+      "posterSourceSeconds": 97
+    }
+  ]
+}
