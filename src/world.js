@@ -45,28 +45,36 @@ export function segmentWalkable(a,b){
 export function moveOnRoad(player,dx,dy){
  if(!Number.isFinite(dx)||!Number.isFinite(dy))return player;
  if(!walkable(player.x,player.y))Object.assign(player,snap(player));
- const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/2));
- const sx=dx/steps,sy=dy/steps;
+ const amount=Math.hypot(dx,dy);if(amount<EPS)return player;
+ const steps=Math.max(1,Math.ceil(amount/2)),sx=dx/steps,sy=dy/steps;
  for(let i=0;i<steps;i++){
-  const both={x:player.x+sx,y:player.y+sy};
-  if(segmentWalkable(player,both)){Object.assign(player,both);continue;}
-  // Follow a nearby road's tangent when input points along an angled road.
-  // Pure axis sliding stops at a sloping curb. Projecting only the forward
-  // component keeps that same input walking naturally around its boundary.
-  // A perpendicular push has no such component and must not drift sideways.
-  const requested=Math.hypot(sx,sy);let slide=null,best=-Infinity;
-  if(requested>EPS)for(const [a,b] of segments){
+  const requested=Math.hypot(sx,sy),lookahead=14;let guided=null,best=-Infinity;
+  // Steer toward the road ahead before reaching its curb. Keeping the old
+  // lateral offset while sliding made bends impossible to follow; repeatedly
+  // switching between free movement and curb sliding also flickered the gait.
+  // Only local capsules are considered, and every actual step is swept-tested.
+  for(const [a,b] of segments){
    const hit=projection(player,a,b);if(hit.distance>ROAD_HALF_WIDTH+EPS)continue;
    const length=Math.hypot(b[0]-a[0],b[1]-a[1]);if(length<EPS)continue;
    const ux=(b[0]-a[0])/length,uy=(b[1]-a[1])/length;
    const forward=sx*ux+sy*uy,alignment=Math.abs(forward)/requested;
-   if(alignment<.6)continue;
-   const candidate={x:player.x+ux*forward,y:player.y+uy*forward};
+   // Allow a cardinal key to follow an angled street, while a perpendicular
+   // push into a house/field cannot create arbitrary sideways movement.
+   if(alignment<.35)continue;
+   const ahead=Math.max(0,Math.min(1,hit.t+Math.sign(forward)*lookahead/length));
+   const target={x:a[0]+ahead*(b[0]-a[0]),y:a[1]+ahead*(b[1]-a[1])};
+   const distance=dist(player,target);if(distance<EPS)continue;
+   const tx=(target.x-player.x)/distance,ty=(target.y-player.y)/distance;
+   const intent=(tx*sx+ty*sy)/requested;if(intent<=.05)continue;
+   const step=Math.min(requested,distance);
+   const candidate={x:player.x+tx*step,y:player.y+ty*step};
    if(!segmentWalkable(player,candidate))continue;
-   const score=alignment-hit.distance*.001;
-   if(score>best){best=score;slide=candidate;}
+   const score=alignment*.7+intent*.3-hit.distance*.005;
+   if(score>best){best=score;guided=candidate;}
   }
-  if(slide)Object.assign(player,slide);
+  if(guided){Object.assign(player,guided);continue;}
+  const direct={x:player.x+sx,y:player.y+sy};
+  if(segmentWalkable(player,direct))Object.assign(player,direct);
  }
  return player;
 }

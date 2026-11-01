@@ -84,3 +84,12 @@ export function moveSpeed(currentSpeed, wantsMove, dt, options = {}) {
     ? Math.min(target, current + delta)
     : Math.max(target, current - delta);
 }
+
+// Use elapsed foreground time even on a slow tablet, in collision-safe steps.
+// A long suspended-tab interval is capped; the game resets its clock on resume.
+export function movementSteps(elapsed){
+ const seconds=Math.max(0,Math.min(1,finite(elapsed)));
+ if(!seconds)return [];
+ const count=Math.ceil(seconds/(1/60));
+ return Array(count).fill(seconds/count);
+}

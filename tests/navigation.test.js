@@ -25,9 +25,13 @@ test('snap projects to a road rather than a grid square, and paths keep off-cent
  assert.ok(dist(route[0],center)<.001);
  const original={...p};advance(p,route,1);assert.ok(Math.abs(dist(original,p)-1)<.001);
 });
-test('swept movement cannot tunnel through buildings even with a large input',()=>{
- const start={...NPC_STOPS.owl};moveOnRoad(start,300,-160);
- assert.ok(walkable(start.x,start.y));assert.ok(start.x<650);
+test('large manual inputs stay continuously on roads instead of tunneling through buildings',()=>{
+ const positions=[],start={...NPC_STOPS.owl};
+ const player=new Proxy(start,{set(target,key,value){target[key]=value;if(key==='y')positions.push({...target});return true;}});
+ moveOnRoad(player,300,-160);
+ let previous={...NPC_STOPS.owl};
+ for(const next of positions){assert.ok(segmentWalkable(previous,next),JSON.stringify({previous,next}));previous=next;}
+ assert.ok(positions.length>100);assert.ok(walkable(start.x,start.y));
  const bridge={x:660,y:496};assert.equal(segmentWalkable(bridge,{x:732,y:711}),false);
 });
 test('centerline routing goes around the factory instead of cutting through its roof',()=>{
@@ -54,3 +58,28 @@ test('pushing perpendicularly into a road edge stops instead of drifting along i
  assert.ok(walkable(p.x,p.y));assert.ok(dist(start,p)<.001,JSON.stringify(p));
 });
 const EPSILON=1e-7;
+
+test('all eight input directions can follow a matching road through its bend or junction',()=>{
+ const q=Math.SQRT1_2;
+ const cases=[
+  ['right',{x:523,y:565},1,0],['left',{x:790,y:441},-1,0],
+  ['up',{x:790,y:733},0,-1],['down',{x:584,y:316},0,1],
+  ['up-right',{x:660,y:496},q,-q],['down-left',{x:724,y:469},-q,q],
+  ['down-right',{x:622,y:650},q,q],['up-left',{x:849,y:762},-q,-q],
+ ];
+ for(const [name,start,dx,dy] of cases){
+  const p={...start};
+  for(let i=0;i<60;i++){
+   const before={...p};moveOnRoad(p,dx*3,dy*3);
+   assert.ok(segmentWalkable(before,p),name);
+   assert.ok((p.x-before.x)*dx+(p.y-before.y)*dy>=-EPSILON,name+' moved against input');
+  }
+  assert.ok(dist(start,p)>150,name+': '+JSON.stringify(p));
+ }
+});
+test('tiny joystick steps keep moving around a bend without accumulating curb offset',()=>{
+ const start={x:523,y:565},fine={...start},coarse={...start};
+ for(let i=0;i<1200;i++)moveOnRoad(fine,.15,0);
+ for(let i=0;i<60;i++)moveOnRoad(coarse,3,0);
+ assert.ok(dist(start,fine)>150);assert.ok(dist(fine,coarse)<3,JSON.stringify({fine,coarse}));
+});

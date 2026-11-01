@@ -158,3 +158,10 @@ input::placeholder,textarea::placeholder,.research-notes textarea::placeholder{c
 /* END READABLE EXPLANATIONS v4.2 */
 /* Emphasis inside a reading paragraph keeps the paragraph's clear letterforms. */
 p b,p strong,p em,p span,.dialogue-text b,.dialogue-text strong,.dialogue-text em,.research-collected-note b,.research-card-comparison b{font-family:inherit}
+
+/* v4.3: transient notices never intercept a walking target. */
+.toast{pointer-events:none}
+
+/* Passing residents keep the walking lane and name tags clear. */
+.player-name,.npc .actor-name{max-width:112px;overflow:hidden;text-overflow:ellipsis}
+.npc.label-crowded .actor-name{opacity:0;visibility:hidden}
