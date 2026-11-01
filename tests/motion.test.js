@@ -63,6 +63,28 @@ test('standing or a blocked step rests at frame zero and preserves facing', () =
   assert.equal(gait.distance, 0);
 });
 
+test('meeting a resident overrides the final upward walking step with a front idle pose', () => {
+  const rear = updateGait(createGait(), 0, -30, .1);
+  assert.equal(rear.row, 2);
+  const talking = updateGait(rear, 0, -4, 1 / 60, {talking:true});
+  assert.equal(talking.row, 0);
+  assert.equal(talking.frame, 0);
+  assert.equal(talking.moving, false);
+  assert.equal(talking.bob, 0);
+  assert.equal(updateGait(talking,0,0).row, 0, 'closing the conversation keeps the front idle pose');
+  assert.equal(updateGait(talking,0,-4).row, 2, 'walking upward again still uses the rear atlas');
+  assert.equal(rear.row, 2, 'conversation rendering does not mutate the previous gait');
+});
+
+test('conversation pose clears left mirroring and stays front-facing for every arrival direction', () => {
+  for (const [dx,dy] of [[-4,0],[4,0],[0,4],[0,-4],[-4,-4],[4,-4]]) {
+    const gait=updateGait(createGait(),dx*10,dy*10);
+    const pose=updateGait(gait,dx,dy,1/60,{talking:true});
+    assert.equal(pose.row,0);assert.equal(pose.flip,false);assert.equal(pose.frame,0);
+    assert.equal(pose.distance,0);assert.equal(pose.moving,false);
+  }
+});
+
 test('body lift is subtle and invalid frame data does not corrupt state', () => {
   let gait = createGait();
   for (let i = 0; i < 100; i++) {

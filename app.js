@@ -1,4 +1,4 @@
-/* 들빛마을 bundle v4.3.0 · 9fb7b97b07a9 · node scripts/build.mjs */
+/* 들빛마을 bundle v4.3.1 · 18b815eb3223 · node scripts/build.mjs */
 ;(()=>{
  'use strict';
  try{
@@ -238,10 +238,16 @@ function createGait(options = {}) {
   };
 }
 
-function updateGait(gait, dx, dy, dt = 1 / 60) {
+function updateGait(gait, dx, dy, dt = 1 / 60, {talking = false} = {}) {
   // dt remains part of the API so callers can use the same frame inputs as
   // movement. Phase intentionally follows distance, independent of frame rate.
   const next = { ...gait };
+  // An encounter can begin in the same frame as the final walking step.
+  // Dialogue takes precedence over that step's heading, including an upward
+  // arrival which would otherwise leave the back-facing idle pose on screen.
+  if (talking) {
+    return { ...next, distance: 0, frame: 0, row: 0, flip: false, moving: false, bob: 0 };
+  }
   dx = finite(dx);
   dy = finite(dy);
   if (!Number.isFinite(dt) || dt < 0) {
@@ -1252,7 +1258,7 @@ const research=createResearch({getName:()=>state.name,
  onClose:()=>{keys.clear();resetStick();if(hasSession){syncEvidenceProgress();save();updateQuest();}}});
 function pauseForEvidence(){route=[];arrival=null;clearRoute();keys.clear();resetStick();$('destination').hidden=true;closeDialogue();}
 function meetResident(n){
- evidenceResident=n;pauseForEvidence();
+ evidenceResident=n;pauseForEvidence();faceConversation();
  if(!state.intro){state.intro=true;save();}
  if(n.id==='grower'){research.openReference('grow',{npc:n});updateQuest();return;}
  const id=n.id==='farmer'?'rice':'maps',q=QUESTS.find(q=>q.lab===id),record=research.records()[id];
@@ -1266,6 +1272,7 @@ function saved(){try{return restore(localStorage.getItem(SAVE_KEY))}catch{return
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3500)}
 function tone(kind='step'){if(!sound)return;try{audioCtx??=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.setValueAtTime(kind==='win'?587:kind==='time'?280:740,audioCtx.currentTime);if(kind==='win')o.frequency.exponentialRampToValueAtTime(1174,audioCtx.currentTime+.2);g.gain.setValueAtTime(.065,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.3);o.start();o.stop(audioCtx.currentTime+.32)}catch{}}
 function avatarArt(el,i){el.className='sprite cast-'+i;if(el===$('player-art'))walker.select(i);}
+function faceConversation(){gait=updateGait(gait,0,0,0,{talking:true});walkingSpeed=0;$('player').classList.remove('walking','facing-left');walker.render(gait);}
 function setScreen(id){for(const s of ['title-screen','create-screen','game-screen'])$(s).hidden=s!==id;running=id==='game-screen';if(!running){route=[];arrival=null;keys.clear();resetStick();closeDialogue();$('panel').close()}else{$('viewport').focus({preventScroll:true});resize()}}
 function updateContinue(){$('continue-game').hidden=!saved()}
 AVATARS.forEach((a,i)=>{const b=document.createElement('button');b.className='avatar-choice'+(i===0?' active':'');b.innerHTML=`<span class="sprite cast-${i}"></span><b>${a.name}</b>`;b.setAttribute('aria-label',a.name);b.setAttribute('aria-pressed',i===0?'true':'false');b.onclick=()=>{avatar=i;[...$('avatar-options').children].forEach((el,j)=>{el.classList.toggle('active',j===i);el.setAttribute('aria-pressed',j===i?'true':'false')})};$('avatar-options').append(b)});
@@ -1284,14 +1291,14 @@ function updateQuest(){
  else{$('quest-chapter').textContent=state.ending?'탐정단 인증 완료':'최종 보고';$('quest-title').textContent=state.ending?'비교 단서 수집 완료!':'부엉 박사에게 보고하기';$('quest-instruction').textContent='농사 방법과 땅의 쓰임을 비교한 단서 카드를 수첩에서 확인해요.';$('quest-steps').innerHTML='<span class="quest-step done">✓ 두 가지 비교 카드</span>';}
  renderWorld();
 }
-function say(n,pages,onDone=null,options={}){route=[];arrival=null;clearRoute();keys.clear();resetStick();clearInterval(typing);dialogue={n,pages,index:0,onDone,...options};$('dialogue').hidden=false;$('controls').hidden=true;$('speaker').textContent=n.name;$('dialogue-tag').textContent=n.role||'들빛마을';avatarArt($('portrait'),n.art??7);$('dialogue-choices').replaceChildren();showPage();}
+function say(n,pages,onDone=null,options={}){faceConversation();route=[];arrival=null;clearRoute();keys.clear();resetStick();clearInterval(typing);dialogue={n,pages,index:0,onDone,...options};$('dialogue').hidden=false;$('controls').hidden=true;$('speaker').textContent=n.name;$('dialogue-tag').textContent=n.role||'들빛마을';avatarArt($('portrait'),n.art??7);$('dialogue-choices').replaceChildren();showPage();}
 function showPage(){const d=dialogue;if(!d)return;const text=d.pages[d.index];$('dialogue-text').textContent='';$('page-count').textContent=`${d.index+1} / ${d.pages.length}`;$('dialogue-next').hidden=false;$('dialogue-next').textContent=d.index===d.pages.length-1?(d.lastLabel||'이야기 마치기 ✓'):'다음 이야기 ▸';$('dialogue-choices').replaceChildren();typed=false;let count=0;clearInterval(typing);typing=setInterval(()=>{if(!dialogue){clearInterval(typing);return}count+=2;$('dialogue-text').textContent=text.slice(0,count);if(count>=text.length){typed=true;clearInterval(typing)}},18);}
 function reveal(){if(!dialogue)return;clearInterval(typing);$('dialogue-text').textContent=dialogue.pages[dialogue.index];typed=true;}
 $('dialogue-next').onclick=()=>{if(!dialogue)return;if(!typed){reveal();return}if(dialogue.index<dialogue.pages.length-1){dialogue.index++;showPage()}else{const fn=dialogue.onDone;closeDialogue();fn?.()}};
 $('dialogue-text').onclick=()=>{if(dialogue&&!typed)reveal()};$('dialogue-close').onclick=()=>{closeDialogue();toast('대화를 마쳐야 이야기가 기록돼요. 다시 말을 걸 수 있어요.')};
 function closeDialogue(){clearInterval(typing);dialogue=null;$('dialogue').hidden=true;$('controls').hidden=false;$('dialogue-choices').replaceChildren()}
 function talk(n){
- if(traveling)return;tone();
+ if(traveling)return;tone();faceConversation();
  if(n.id!=='owl'){meetResident(n);return;}
  if(!state.intro){say(n,[`반가워, ${state.name}! 나는 부엉 박사야. 두 가지 시간여행 의뢰가 있단다.`, '주민을 만나면 실제 사진이나 영상이 열려. 직접 본 모습을 적고 단서를 수집해 봐.', '과거 단서를 얻으면 시간을 바꿔 같은 주민을 다시 만나렴. 현재 단서까지 얻으면 두 자료를 비교해 마지막 단서 카드를 완성할 수 있어.'],()=>{state.intro=true;save();updateQuest();toast('들녘 할아버지에게 가면 실제 자료가 열려요.');},{lastLabel:'주민 만나러 출발! →'});return;}
  if(!currentQuest(state)){state.ending=true;save();tone('win');confetti();showEnding();return;}
@@ -1370,7 +1377,7 @@ function frame(time){
    interactions();
   }else{walkingSpeed=0;}
   const dx=state.x-before.x,dy=state.y-before.y;
-  gait=updateGait(gait,dx,dy,dt);
+  gait=updateGait(gait,dx,dy,dt,{talking:!!dialogue||research.isOpen()||$('panel').open});
   $('player').classList.toggle('walking',gait.moving);
   $('player').classList.remove('facing-left');
   walker.render(gait);
@@ -1388,7 +1395,7 @@ function frame(time){
 function showPanel(label,html){keys.clear();resetStick();$('panel-label').textContent=label;$('panel-content').innerHTML=html;if(!$('panel').open)$('panel').showModal()}
 $('panel-close').onclick=()=>$('panel').close();$('panel').addEventListener('click',e=>{if(e.target===$('panel')){const r=$('panel').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('panel').close()}});
 $('journal-button').onclick=()=>{if(traveling)return;pauseForEvidence();research.openNotebook();};
-$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 길이나 주민을 누르면 도로를 따라 걸어가요. 조이스틱·방향키·WASD로도 움직일 수 있어요. 건물과 논밭으로는 들어갈 수 없어요. ‘마을 전체’로 길을 살펴보고 ‘가까이 걷기’로 풍경을 볼 수 있어요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.3 · 길 따라 걷기와 주민 간격 개선</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
+$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 길이나 주민을 누르면 도로를 따라 걸어가요. 조이스틱·방향키·WASD로도 움직일 수 있어요. 건물과 논밭으로는 들어갈 수 없어요. ‘마을 전체’로 길을 살펴보고 ‘가까이 걷기’로 풍경을 볼 수 있어요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.3.1 · 길 따라 걷기와 주민 간격 개선</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
 
 function download(){const c=document.createElement('canvas');c.width=1400;c.height=1000;const x=c.getContext('2d');x.fillStyle='#f8f4e5';x.fillRect(0,0,1400,1000);x.strokeStyle='#91b296';x.lineWidth=8;x.strokeRect(35,35,1330,930);x.textAlign='center';x.fillStyle='#849b76';x.font='bold 18px sans-serif';x.fillText('TIME TRAVEL DETECTIVES · CHAPTER 01',700,115);x.fillStyle='#305d4c';x.font='bold 56px sans-serif';x.fillText('들빛마을 시간 탐정 인증서',700,205);x.font='36px sans-serif';x.fillText(state.name+' 탐정',700,295);x.font='25px sans-serif';['손으로 모내기하는 사진과 기계 모내기 영상','대전 갑천 주변의 1970년·2021년 항공사진','과거와 현재의 실제 자료에서 네 단서를 모으고','두 가지 비교 카드에 관찰한 모습과 근거를 남겼습니다.'].forEach((t,i)=>x.fillText(t,700,390+i*62));x.fillStyle='#e8e8ce';x.fillRect(100,695,1200,130);x.fillStyle='#4b7158';x.font='23px sans-serif';x.fillText('환경을 이용하며 살아가는 모습은 다양하고,',700,747);x.fillText('지역마다 변화 모습도 다를 수 있습니다.',700,790);x.fillStyle='#8b987d';x.font='17px sans-serif';x.fillText('가상 마을 탐험 · 실제 자료 네 단서 · 두 비교 카드 완료',700,905);const a=document.createElement('a');a.download='들빛마을_시간탐정_인증서.png';a.href=c.toDataURL('image/png');document.body.append(a);a.click();a.remove();toast('인증서 이미지를 저장했어요.')}
 function confetti(){const root=$('confetti');root.replaceChildren();for(let i=0;i<35;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'%';p.style.background=['#f6cd6e','#98bf9a','#e99e88','#98c7cc'][i%4];p.style.animationDelay=Math.random()*.5+'s';p.style.rotate=Math.random()*360+'deg';root.append(p)}setTimeout(()=>root.replaceChildren(),3600)}

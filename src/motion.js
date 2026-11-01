@@ -31,10 +31,16 @@ export function createGait(options = {}) {
   };
 }
 
-export function updateGait(gait, dx, dy, dt = 1 / 60) {
+export function updateGait(gait, dx, dy, dt = 1 / 60, {talking = false} = {}) {
   // dt remains part of the API so callers can use the same frame inputs as
   // movement. Phase intentionally follows distance, independent of frame rate.
   const next = { ...gait };
+  // An encounter can begin in the same frame as the final walking step.
+  // Dialogue takes precedence over that step's heading, including an upward
+  // arrival which would otherwise leave the back-facing idle pose on screen.
+  if (talking) {
+    return { ...next, distance: 0, frame: 0, row: 0, flip: false, moving: false, bob: 0 };
+  }
   dx = finite(dx);
   dy = finite(dy);
   if (!Number.isFinite(dt) || dt < 0) {
