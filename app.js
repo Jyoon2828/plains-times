@@ -1,4 +1,4 @@
-/* 들빛마을 bundle v4.1.0 · 8733c177f850 · node scripts/build.mjs */
+/* 들빛마을 bundle v4.2.0 · 6c0edfde4068 · node scripts/build.mjs */
 ;(()=>{
  'use strict';
  try{
@@ -670,14 +670,17 @@ const {WIDTH, HEIGHT}=__mod1;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 function viewScale(width,height,overview=false){
  const w=Math.max(1,width),h=Math.max(1,height);
- return overview?Math.min(w/WIDTH,h/HEIGHT):clamp(Math.max(w/760,h/420),1.6,2.6);
+ // Cover the playable viewport at the original aspect ratio. A contain scale
+ // left wide green bars on electronic whiteboards and wide tablet windows.
+ const cover=Math.max(w/WIDTH,h/HEIGHT);
+ return overview?cover:Math.max(cover*1.35,clamp(Math.max(w/760,h/420),1.6,2.6));
 }
 function cameraBounds(value,viewport,world){
  return world<=viewport?(viewport-world)/2:clamp(value,viewport-world,0);
 }
 function cameraFrame(previous,player,width,height,{overview=false,dialogue=false,dt=1/60,immediate=false,reducedMotion=false}={}){
  const target=viewScale(width,height,overview),t=immediate||reducedMotion?1:1-Math.exp(-Math.max(0,Math.min(.1,dt))*5);
- const zoom=previous.zoom+(target-previous.zoom)*t;
+ const zoom=Math.max(viewScale(width,height,true),t===1?target:previous.zoom+(target-previous.zoom)*t);
  const tx=cameraBounds(width*.5-player.x*zoom,width,WIDTH*zoom);
  const ty=cameraBounds(height*(dialogue?.48:.58)-player.y*zoom,height,HEIGHT*zoom);
  const follow=immediate||reducedMotion?1:1-Math.exp(-Math.max(0,Math.min(.1,dt))*7);
@@ -1298,7 +1301,7 @@ function frame(time){
 function showPanel(label,html){keys.clear();resetStick();$('panel-label').textContent=label;$('panel-content').innerHTML=html;if(!$('panel').open)$('panel').showModal()}
 $('panel-close').onclick=()=>$('panel').close();$('panel').addEventListener('click',e=>{if(e.target===$('panel')){const r=$('panel').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('panel').close()}});
 $('journal-button').onclick=()=>{if(traveling)return;pauseForEvidence();research.openNotebook();};
-$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 길이나 주민을 누르면 도로를 따라 걸어가요. 조이스틱·방향키·WASD로도 움직일 수 있어요. 건물과 논밭으로는 들어갈 수 없어요. ‘마을 전체’로 길을 살펴보고 ‘가까이 걷기’로 풍경을 볼 수 있어요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.1 · 길 따라 걷는 마을 탐험</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
+$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 길이나 주민을 누르면 도로를 따라 걸어가요. 조이스틱·방향키·WASD로도 움직일 수 있어요. 건물과 논밭으로는 들어갈 수 없어요. ‘마을 전체’로 길을 살펴보고 ‘가까이 걷기’로 풍경을 볼 수 있어요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.2 · 화면 가득 마을 탐험</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
 
 function download(){const c=document.createElement('canvas');c.width=1400;c.height=1000;const x=c.getContext('2d');x.fillStyle='#f8f4e5';x.fillRect(0,0,1400,1000);x.strokeStyle='#91b296';x.lineWidth=8;x.strokeRect(35,35,1330,930);x.textAlign='center';x.fillStyle='#849b76';x.font='bold 18px sans-serif';x.fillText('TIME TRAVEL DETECTIVES · CHAPTER 01',700,115);x.fillStyle='#305d4c';x.font='bold 56px sans-serif';x.fillText('들빛마을 시간 탐정 인증서',700,205);x.font='36px sans-serif';x.fillText(state.name+' 탐정',700,295);x.font='25px sans-serif';['손으로 모내기하는 사진과 기계 모내기 영상','대전 갑천 주변의 1970년·2021년 항공사진','과거와 현재의 실제 자료에서 네 단서를 모으고','두 가지 비교 카드에 관찰한 모습과 근거를 남겼습니다.'].forEach((t,i)=>x.fillText(t,700,390+i*62));x.fillStyle='#e8e8ce';x.fillRect(100,695,1200,130);x.fillStyle='#4b7158';x.font='23px sans-serif';x.fillText('환경을 이용하며 살아가는 모습은 다양하고,',700,747);x.fillText('지역마다 변화 모습도 다를 수 있습니다.',700,790);x.fillStyle='#8b987d';x.font='17px sans-serif';x.fillText('가상 마을 탐험 · 실제 자료 네 단서 · 두 비교 카드 완료',700,905);const a=document.createElement('a');a.download='들빛마을_시간탐정_인증서.png';a.href=c.toDataURL('image/png');document.body.append(a);a.click();a.remove();toast('인증서 이미지를 저장했어요.')}
 function confetti(){const root=$('confetti');root.replaceChildren();for(let i=0;i<35;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'%';p.style.background=['#f6cd6e','#98bf9a','#e99e88','#98c7cc'][i%4];p.style.animationDelay=Math.random()*.5+'s';p.style.rotate=Math.random()*360+'deg';root.append(p)}setTimeout(()=>root.replaceChildren(),3600)}

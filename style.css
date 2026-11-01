@@ -135,3 +135,26 @@ dialog{border:3px solid #91a074;background:linear-gradient(#fffcee,#f9efd7);box-
 /* Resident hit targets retain their feet anchor while pressed. */
 .actor.npc,.actor.npc:hover,.actor.npc:active,.actor.npc:not(:disabled):active{transform:translate(-50%,-100%);box-shadow:none;border:0;background:none;transition:none;text-shadow:none}
 /* END COZY GAME UI v4.1 */
+
+/* BEGIN READABLE EXPLANATIONS v4.2 */
+@font-face{font-family:DeulbitReading;src:url('assets/fonts/NotoSansKR-Reading.woff') format('woff');font-style:normal;font-weight:400 700;font-display:swap}
+:root{--reading-font:DeulbitReading,'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;font-family:var(--reading-font)}
+body,input,textarea,select,.research-dialog{font-family:var(--reading-font)}
+/* The rounded face is for short game labels; paragraphs inherit the reading face. */
+h1,h2,h3,button,.brand,.edition,.actor-name,.player-name,.quest-head,.quest-steps,.xp-badge,.location,.map-label,.title-hello,.panel-head,.dialogue-top,.research-eyebrow,.research-era-pill,.research-npc-bubble b,.research-npc-bubble span,.research-note-intro>span,.research-writing-label>b,.research-evidence-card-head,.walk-status b,.waypoint,.control-tip{font-family:var(--round-font)}
+.title-copy,.title-note,.title-bottom,.create-card>p,.create-card label,.quest-card p,.dialogue-text,.toast,#panel-content p,#panel-content li,.journal-entry p,.research-source-title,.research-source-meta,.research-source-details,.research-material-notice,.research-note-intro>p,.research-writing-label small,.research-toolbar>p,.research-status,.research-after-collect p,.research-collected-note,.research-swipe-notes,.research-pocket p,.research-pocket small,.research-card-comparison,.research-reference-card p,.research-notebook-intro p,.research-uncollected-tip,.research-pin-empty,.research-pin-chip,.research-selected-pin label,.research-npc-bubble p,.walk-status small{font-family:var(--reading-font);letter-spacing:0;text-shadow:none;font-weight:400}
+.quest-card p,.dialogue-text,.title-copy,#panel-content p,#panel-content li,.journal-entry p,.research-note-intro>p,.research-writing-label small,.research-material-notice,.research-status,.research-after-collect p,.research-collected-note p,.research-swipe-notes p,.research-pocket p,.research-card-comparison p,.research-reference-card p,.research-notebook-intro p,.research-npc-bubble p{color:#405240;line-height:1.75;word-break:keep-all;overflow-wrap:anywhere}
+.quest-card p{font-weight:500;line-height:1.8}
+.research-source-title,.research-source-meta,.research-source-details,.research-source-details p,.research-source-details small,.research-pocket small,.research-uncollected-tip,.research-selected-pin label,.research-pin-empty,.research-toolbar>p,.walk-status small{color:#53664d}
+.research-source-details p,.research-source-details small{line-height:1.75!important}
+.research-source-title b,.research-source-meta b,.research-card-comparison>b,.research-collected-note>b,.research-swipe-notes b,#panel-content p b,.journal-entry p b{font-weight:600}
+input,textarea,select,.research-notes textarea{color:#33483d;line-height:1.75;letter-spacing:0}
+input::placeholder,textarea::placeholder,.research-notes textarea::placeholder{color:#788571;font-weight:400}
+.research-notes textarea[readonly]{font-family:var(--reading-font);color:#405240}
+.research-npc-bubble p{font-size:17px}.research-note-intro>p,.research-status,.research-after-collect p{font-size:15px}
+@media(max-width:1000px){.research-npc-bubble p{font-size:15px}.research-note-intro>p,.research-status,.research-after-collect p{font-size:14px}}
+@media(max-width:650px){.quest-card p{font-size:14px;line-height:1.7}.dialogue-text{font-size:18px;line-height:1.7}.research-npc-bubble p{font-size:14px;line-height:1.65}.research-note-intro>p{font-size:15px}.research-status,.research-after-collect p{font-size:14px}.research-notes textarea{font-size:18px;line-height:1.75}}
+@media(max-height:620px) and (min-width:651px){.quest-card p{font-size:13px;line-height:1.65}.dialogue-text{font-size:18px;line-height:1.65}.research-npc-bubble p,.research-note-intro>p,.research-status,.research-after-collect p{font-size:13px;line-height:1.6}}
+/* END READABLE EXPLANATIONS v4.2 */
+/* Emphasis inside a reading paragraph keeps the paragraph's clear letterforms. */
+p b,p strong,p em,p span,.dialogue-text b,.dialogue-text strong,.dialogue-text em,.research-collected-note b,.research-card-comparison b{font-family:inherit}
