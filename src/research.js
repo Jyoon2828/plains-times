@@ -39,7 +39,7 @@ export function createResearch({mount=document.body,getName=()=>'',onCollected=(
   const titleHTML=`<div class="research-source-title"><span class="source-dot dot-${index}"></span><b>${esc(title)}</b></div>`;
   const error=`<div class="research-media-error" hidden>자료를 불러오지 못했어요.<br>단서를 수집하려면 사진·영상이 열려야 해요.<br><a href="${esc(source.sourceUrl||'#')}" target="_blank" rel="noopener noreferrer">자료 원문 열기 ↗</a></div>`;
   const collectedNote=context.type==='compare'&&!overlay?`<div class="research-collected-note"><b>${eraLabel(eras[index])}에 내가 찾은 단서</b><p>${esc(record()[eras[index]].observation)}</p></div>`:'';
-  if(source.kind==='video')return `<section class="research-source is-video" data-source="${esc(source.id)}">${titleHTML}<div class="research-video-wrap"><video controls playsinline preload="metadata" ${source.poster?`poster="${esc(source.poster)}"`:''} aria-label="${esc(source.title)}"><source src="${esc(source.src||'')}" type="video/mp4"></video>${error}</div><p class="research-video-tip">▷ 재생하고, 멈춰서 자세히 살펴봐요.</p>${sourceFoot(source)}${collectedNote}</section>`;
+  if(source.kind==='video')return `<section class="research-source is-video" data-source="${esc(source.id)}">${titleHTML}<div class="research-video-wrap"><video controls playsinline preload="metadata" ${source.poster?`poster="${esc(source.poster)}"`:''} aria-label="${esc(source.title)}">${source.webm?`<source src="${esc(source.webm)}" type="video/webm">`:''}<source src="${esc(source.src||'')}" type="video/mp4"></video>${error}</div><p class="research-video-tip">▷ 재생하고, 멈춰서 자세히 살펴봐요.</p>${sourceFoot(source)}${collectedNote}</section>`;
   return `<section class="research-source" data-source="${esc(source.id)}">${titleHTML}<div class="research-source-window" tabindex="0" aria-label="${esc(source.title)}${canPin?'. 사진에서 단서를 찾은 곳을 누르세요.':''}"><div class="research-scroll-space"><div class="research-photo-plane ${canPin?'can-pin':''}" data-source-index="${index}" data-can-pin="${canPin}"><img src="${esc(source.src||'')}" alt="${esc(source.title)}" draggable="false">${overlay?`<img class="research-overlay-image" src="${esc(lab().sources[1]?.src||'')}" alt="${esc(lab().sources[1]?.title||'최근 자료')}" draggable="false"><span class="research-swipe-line" aria-hidden="true"></span>`:''}<div class="research-pins"></div></div></div>${error}</div>${sourceFoot(source)}${collectedNote}</section>`;
  }
  function toolbar(showImages,canSwipe=false){return `<div class="research-toolbar"><p>${context.type==='encounter'&&context.canCollect&&showImages?'사진·지도에서 단서를 찾은 곳에 표시할 수 있어요.':showImages?'크게 보거나 움직여서 자세히 살펴봐요.':'영상을 재생하고 멈추며 자세히 살펴봐요.'}</p><div class="research-view-buttons" ${showImages?'':'hidden'}>${canSwipe?`<button data-action="split" class="${mode==='split'?'active':''}">나란히</button><button data-action="swipe" class="${mode==='swipe'?'active':''}">겹쳐 보기</button>`:''}<button data-action="zoom-out" aria-label="사진 축소">−</button><span class="research-zoom-label">${Math.round(zoom*100)}%</span><button data-action="zoom-in" aria-label="사진 확대">＋</button><button data-action="reset-view" aria-label="사진 크기와 위치 처음으로">↺</button></div></div>`;}
@@ -117,9 +117,14 @@ export function createResearch({mount=document.body,getName=()=>'',onCollected=(
   const showError=(node,sourceId)=>{if(token!==viewToken)return;loaded.delete(sourceId);node.hidden=true;const error=node.closest('.research-source')?.querySelector('.research-media-error');if(error)error.hidden=false;updateCollectButton();status('자료가 열리지 않아 단서를 수집할 수 없어요. 원문을 확인하거나 다시 만나 보세요.');};
   $$('video').forEach(video=>{
    const sourceId=video.closest('[data-source]').dataset.source;
-   for(const name of ['loadeddata','canplay'])video.addEventListener(name,()=>markReady(sourceId));
-   video.addEventListener('error',()=>showError(video,sourceId));video.querySelector('source')?.addEventListener('error',()=>showError(video,sourceId));
-   if(video.readyState>=2)markReady(sourceId);
+   const sources=[...video.querySelectorAll('source')],failed=new Set();
+   const ready=()=>{if(token!==viewToken)return;video.hidden=false;const error=video.closest('.research-source')?.querySelector('.research-media-error');if(error)error.hidden=true;markReady(sourceId);};
+   for(const name of ['loadeddata','canplay'])video.addEventListener(name,ready);
+   video.addEventListener('error',()=>showError(video,sourceId));
+   // A browser may reject one format and then load the next source. Do not
+   // hide a working fallback when only the first source reports an error.
+   for(const source of sources)source.addEventListener('error',()=>{failed.add(source);if(failed.size===sources.length&&video.readyState<2)showError(video,sourceId);});
+   if(video.readyState>=2)ready();
   });
   $$('.research-photo-plane').forEach(plane=>{
    const image=plane.querySelector('img'),sourceId=plane.closest('[data-source]').dataset.source;

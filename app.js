@@ -1,4 +1,4 @@
-/* 들빛마을 bundle v4.0.0 · 03b97b83a7b7 · node scripts/build.mjs */
+/* 들빛마을 bundle v4.1.0 · 8733c177f850 · node scripts/build.mjs */
 ;(()=>{
  'use strict';
  try{
@@ -37,42 +37,138 @@ return Object.freeze({WIDTH, HEIGHT, AVATARS, NPCS, QUESTS, MAP_LABELS});
 const __mod2=(()=>{
 const {WIDTH, HEIGHT}=__mod1;
 
+
+// Feet follow the visible paved roads in both village illustrations. In
+// particular there are no shortcuts through the factory, houses or rice fields.
+// Junctions are repeated exactly, so the graph joins only where roads meet.
 const ROADS=[
-[[0,530],[150,560],[300,570],[415,558],[480,535],[535,505],[590,470],[680,440],[770,400],[850,355],[930,320],[1018,327],[1060,305],[1080,260],[1110,200]],
-[[590,470],[550,410],[540,355],[570,310],[578,260],[600,210],[670,163],[760,122],[940,95],[1100,140]],
-[[535,505],[510,555],[525,615],[568,640],[650,695],[780,770],[900,830],[1040,920],[1160,980]],
-[[850,355],[900,400],[950,452],[980,495],[990,555],[1080,600],[1150,660],[1230,720],[1300,760],[1280,840],[1202,927],[1160,980]],
-[[650,695],[760,690],[890,660],[990,555]],
-[[20,410],[150,445],[280,475],[415,500],[480,535]],
-[[160,700],[210,730],[280,780],[330,830],[400,870],[580,900],[650,875],[720,835],[780,770]],
-[[1360,380],[1380,470],[1360,580],[1360,670],[1320,800],[1280,1000]],
-[[1300,530],[1470,560]],
-[[270,769],[193,724],[160,700]],
-[[540,355],[445,328],[380,326]],
-[[1018,327],[1056,274]],
-[[1230,720],[1251,740]],
-[[760,690],[715,681]],
-[[1202,927],[1175,872]],
-[[1251,740],[1300,760]],
-[[650,695],[568,720],[445,735],[330,760],[280,780]],
-[[1160,980],[1280,1000]],
-[[300,570],[330,650],[280,700],[210,730]],
+ [[8,507],[80,533],[160,552],[245,569],[325,581],[399,584],[442,580],[490,562],[535,546],[597,522],[660,496],[724,469],[790,441],[850,416],[919,390],[985,367],[1040,344],[1066,330],[1073,319]],
+ [[748,125],[704,162],[661,197],[622,230],[596,262],[584,290],[584,316],[591,340],[609,359],[640,379],[684,402],[735,425],[790,441]],
+ [[535,546],[523,565],[520,584],[526,600],[546,615],[571,628],[622,650],[676,676],[732,705],[790,733],[849,762],[909,793],[970,823],[1030,855],[1090,887],[1150,920],[1210,954],[1272,988]],
+ [[790,733],[787,765],[762,791],[728,817],[687,843],[643,871],[598,897],[551,924],[527,941]],
+ [[8,720],[76,749],[142,777],[209,806],[277,836],[346,866],[414,896],[477,924],[527,947],[550,962]],
+ [[527,941],[527,947]],
 ];
-const STEP=16,COLS=Math.ceil(WIDTH/STEP),ROWS=Math.ceil(HEIGHT/STEP);
+const ROAD_HALF_WIDTH=9;
+const EPS=1e-7;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function distanceSegment(x,y,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)}
+const asPoint=a=>({x:a[0],y:a[1]});
 const segments=ROADS.flatMap(p=>p.slice(1).map((b,i)=>[p[i],b]));
-const grid=new Uint8Array(COLS*ROWS);
-for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const x=c*STEP+STEP/2,y=r*STEP+STEP/2;if(x<8||x>WIDTH-8||y<8||y>HEIGHT-8)continue;if(segments.some(([a,b])=>distanceSegment(x,y,a,b)<24))grid[r*COLS+c]=1;}
-const cell=p=>({c:Math.max(0,Math.min(COLS-1,Math.floor(p.x/STEP))),r:Math.max(0,Math.min(ROWS-1,Math.floor(p.y/STEP)))});
-const point=i=>({x:i%COLS*STEP+STEP/2,y:Math.floor(i/COLS)*STEP+STEP/2});
-function walkable(x,y){const {c,r}=cell({x,y});return x>0&&y>0&&x<WIDTH&&y<HEIGHT&&!!grid[r*COLS+c]}
-function snap(p){let best=-1,d=Infinity;for(let i=0;i<grid.length;i++)if(grid[i]){const v=point(i),n=(v.x-p.x)**2+(v.y-p.y)**2;if(n<d){d=n;best=i}}return point(best)}
-function pathfind(start,end){const a=cell(snap(start)),b=cell(snap(end)),si=a.r*COLS+a.c,gi=b.r*COLS+b.c;const open=new Set([si]),came=new Map(),g=new Map([[si,0]]),f=new Map([[si,dist(point(si),point(gi))]]);while(open.size){let cur=-1,low=Infinity;for(const i of open)if(f.get(i)<low){cur=i;low=f.get(i)}if(cur===gi){let out=[point(cur)];while(came.has(cur)){cur=came.get(cur);out.push(point(cur))}return out.reverse().slice(1)}open.delete(cur);const c=cur%COLS,r=Math.floor(cur/COLS);for(const [dc,dr]of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){const nc=c+dc,nr=r+dr;if(nc<0||nr<0||nc>=COLS||nr>=ROWS)continue;const ni=nr*COLS+nc;if(!grid[ni]||(dc&&dr&&(!grid[r*COLS+nc]||!grid[nr*COLS+c])))continue;const ng=g.get(cur)+Math.hypot(dc,dr)*STEP;if(ng<(g.get(ni)??Infinity)){came.set(ni,cur);g.set(ni,ng);f.set(ni,ng+dist(point(ni),point(gi)));open.add(ni)}}}return []}
-function advance(player,path,amount){while(path.length&&amount>0){const next=path[0],d=dist(player,next);if(d<=amount){player.x=next.x;player.y=next.y;amount-=d;path.shift()}else{player.x+=(next.x-player.x)/d*amount;player.y+=(next.y-player.y)/d*amount;amount=0}}return player}
+function projection(p,a,b){
+ const dx=b[0]-a[0],dy=b[1]-a[1],den=dx*dx+dy*dy;
+ const t=Math.max(0,Math.min(1,((p.x-a[0])*dx+(p.y-a[1])*dy)/(den||1)));
+ const point={x:a[0]+t*dx,y:a[1]+t*dy};
+ return {point,t,distance:dist(p,point)};
+}
+function nearest(p){
+ const safe={x:Number.isFinite(p?.x)?p.x:WIDTH/2,y:Number.isFinite(p?.y)?p.y:HEIGHT/2};
+ let best=null;
+ for(let i=0;i<segments.length;i++){
+  const [a,b]=segments[i],hit=projection(safe,a,b);
+  if(!best||hit.distance<best.distance)best={...hit,index:i};
+ }
+ return best;
+}
+function snap(p){return {...nearest(p).point};}
+function walkable(x,y){return Number.isFinite(x)&&Number.isFinite(y)&&x>0&&y>0&&x<WIDTH&&y<HEIGHT&&nearest({x,y}).distance<=ROAD_HALF_WIDTH+EPS;}
 
+// Sample a swept feet segment, not just its endpoint: a large frame delta can
+// never tunnel across a hedge or jump between nearby road bends.
+function segmentWalkable(a,b){
+ if(!walkable(a.x,a.y)||!walkable(b.x,b.y))return false;
+ const steps=Math.max(1,Math.ceil(dist(a,b)/2));
+ for(let i=1;i<steps;i++)if(!walkable(a.x+(b.x-a.x)*i/steps,a.y+(b.y-a.y)*i/steps))return false;
+ return true;
+}
+function moveOnRoad(player,dx,dy){
+ if(!Number.isFinite(dx)||!Number.isFinite(dy))return player;
+ if(!walkable(player.x,player.y))Object.assign(player,snap(player));
+ const steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/2));
+ const sx=dx/steps,sy=dy/steps;
+ for(let i=0;i<steps;i++){
+  const both={x:player.x+sx,y:player.y+sy};
+  if(segmentWalkable(player,both)){Object.assign(player,both);continue;}
+  // Follow a nearby road's tangent when input points along an angled road.
+  // Pure axis sliding stops at a sloping curb. Projecting only the forward
+  // component keeps that same input walking naturally around its boundary.
+  // A perpendicular push has no such component and must not drift sideways.
+  const requested=Math.hypot(sx,sy);let slide=null,best=-Infinity;
+  if(requested>EPS)for(const [a,b] of segments){
+   const hit=projection(player,a,b);if(hit.distance>ROAD_HALF_WIDTH+EPS)continue;
+   const length=Math.hypot(b[0]-a[0],b[1]-a[1]);if(length<EPS)continue;
+   const ux=(b[0]-a[0])/length,uy=(b[1]-a[1])/length;
+   const forward=sx*ux+sy*uy,alignment=Math.abs(forward)/requested;
+   if(alignment<.6)continue;
+   const candidate={x:player.x+ux*forward,y:player.y+uy*forward};
+   if(!segmentWalkable(player,candidate))continue;
+   const score=alignment-hit.distance*.001;
+   if(score>best){best=score;slide=candidate;}
+  }
+  if(slide)Object.assign(player,slide);
+ }
+ return player;
+}
 
-return Object.freeze({snap, pathfind, walkable, advance, dist});
+// The pathfinder follows exact centerline segments. A wide raster corridor can
+// connect roads across a roof or cut a corner; this graph has no such edges.
+const nodes=[],nodeKeys=new Map(),base=[];
+function nodeAt(a){const key=a.join(',');if(nodeKeys.has(key))return nodeKeys.get(key);const id=nodes.length;nodes.push(asPoint(a));base.push([]);nodeKeys.set(key,id);return id;}
+const edges=segments.map(([a,b])=>{
+ const ai=nodeAt(a),bi=nodeAt(b),length=dist(nodes[ai],nodes[bi]);
+ base[ai].push({to:bi,length});base[bi].push({to:ai,length});
+ return {a:ai,b:bi};
+});
+function pathfind(start,end){
+ const from=nearest(start),to=nearest(end);
+ if(dist(start,to.point)<EPS)return [];
+ const points=nodes.map(p=>({...p})),graph=base.map(es=>es.map(e=>({...e})));
+ function attach(hit){
+  const id=points.length;points.push(hit.point);graph.push([]);
+  const edge=edges[hit.index];
+  for(const n of [edge.a,edge.b]){const length=dist(hit.point,points[n]);graph[id].push({to:n,length});graph[n].push({to:id,length});}
+  return id;
+ }
+ const source=attach(from),goal=attach(to);
+ if(from.index===to.index){const length=dist(from.point,to.point);graph[source].push({to:goal,length});graph[goal].push({to:source,length});}
+ const costs=new Map([[source,0]]),previous=new Map(),open=new Set([source]);
+ while(open.size){
+  let current=-1,score=Infinity;
+  for(const id of open){const value=costs.get(id)+dist(points[id],points[goal]);if(value<score){score=value;current=id;}}
+  if(current===goal){
+   const ids=[goal];while(previous.has(current)){current=previous.get(current);ids.push(current);}
+   const line=ids.reverse().map(i=>({...points[i]}));
+   // Walking from an off-center position to its own projection is inside the
+   // same capsule, and is retained as a real movement rather than a teleport.
+   if(dist(start,line[0])<EPS)line.shift();
+   return line.filter((p,i,a)=>i===0||dist(p,a[i-1])>EPS);
+  }
+  open.delete(current);
+  for(const edge of graph[current]){
+   const cost=costs.get(current)+edge.length;
+   if(cost<(costs.get(edge.to)??Infinity)-EPS){costs.set(edge.to,cost);previous.set(edge.to,current);open.add(edge.to);}
+  }
+ }
+ return [];
+}
+function advance(player,path,amount){
+ amount=Number.isFinite(amount)?Math.max(0,amount):0;
+ while(path.length&&amount>0){
+  const next=path[0],d=dist(player,next);
+  if(d<EPS){path.shift();continue;}
+  if(d<=amount){player.x=next.x;player.y=next.y;amount-=d;path.shift();}
+  else{player.x+=(next.x-player.x)/d*amount;player.y+=(next.y-player.y)/d*amount;amount=0;}
+ }
+ return player;
+}
+
+// Meet residents at a shared, visible roadside location in both eras.
+const NPC_STOPS=Object.fromEntries(Object.entries({
+ owl:{x:571,y:628},farmer:{x:591,y:340},grower:{x:1040,y:344},
+ neighbor:{x:399,y:584},worker:{x:849,y:762},
+ curator:{x:246,y:822},traveler:{x:1210,y:954},
+}).map(([id,p])=>[id,snap(p)]));
+
+return Object.freeze({snap, pathfind, NPC_STOPS, moveOnRoad, advance, dist});
 })();
 
 // src/state.js
@@ -566,8 +662,33 @@ function createWalker(host){
 return Object.freeze({createWalker});
 })();
 
-// src/photos.js
+// src/camera.js
 const __mod7=(()=>{
+const {WIDTH, HEIGHT}=__mod1;
+
+
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+function viewScale(width,height,overview=false){
+ const w=Math.max(1,width),h=Math.max(1,height);
+ return overview?Math.min(w/WIDTH,h/HEIGHT):clamp(Math.max(w/760,h/420),1.6,2.6);
+}
+function cameraBounds(value,viewport,world){
+ return world<=viewport?(viewport-world)/2:clamp(value,viewport-world,0);
+}
+function cameraFrame(previous,player,width,height,{overview=false,dialogue=false,dt=1/60,immediate=false,reducedMotion=false}={}){
+ const target=viewScale(width,height,overview),t=immediate||reducedMotion?1:1-Math.exp(-Math.max(0,Math.min(.1,dt))*5);
+ const zoom=previous.zoom+(target-previous.zoom)*t;
+ const tx=cameraBounds(width*.5-player.x*zoom,width,WIDTH*zoom);
+ const ty=cameraBounds(height*(dialogue?.48:.58)-player.y*zoom,height,HEIGHT*zoom);
+ const follow=immediate||reducedMotion?1:1-Math.exp(-Math.max(0,Math.min(.1,dt))*7);
+ return {zoom,x:cameraBounds(previous.x+(tx-previous.x)*follow,width,WIDTH*zoom),y:cameraBounds(previous.y+(ty-previous.y)*follow,height,HEIGHT*zoom)};
+}
+
+return Object.freeze({cameraFrame, viewScale});
+})();
+
+// src/photos.js
+const __mod8=(()=>{
 
 const PHOTOS = {
   "rice": {
@@ -684,8 +805,8 @@ return Object.freeze({PHOTOS});
 })();
 
 // src/research-data.js
-const __mod9=(()=>{
-const {PHOTOS}=__mod7;
+const __mod10=(()=>{
+const {PHOTOS}=__mod8;
 // Actual evidence is kept separate from the illustrated fictional village.
 
 const LABS={
@@ -700,12 +821,12 @@ LABS.maps.sources=[1970,2021].map(year=>({
 LABS.rice.sources=[{
  id:'hand-1989',kind:'image',src:'assets/research/rice-hand-1989.jpg',title:'손으로 모를 심는 모습',date:'1989년 5월 19일 기록',place:'경기도 김포',caption:'사진을 확대해서 손과 도구, 논의 모습을 관찰해요.',sourceUrl:'https://www.ehistory.go.kr/view/photo?mediadtl=105207&mediagbn=PG&mediaid=12634&mediasrcgbn=PT',sourceName:'e영상역사관 기록 사진',credit:'문화체육관광부 e영상역사관 · 공공누리 제4유형 · 사진 원본 그대로. 단서 표시는 별도 화면 요소.'
 },{
- id:'machine-2022',kind:'video',src:'assets/research/rice-machine-2022.mp4',poster:'assets/research/rice-machine-2022.jpg',title:'기계로 모를 심는 모습',date:'2022년 제작',place:'국내 벼농사 사례 · 상세 촬영지 미표기',caption:'25초 관찰 영상 · 무음 발췌. 사람과 기계가 하는 일을 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpClipNo=3&mvpNo=823',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립식량과학원 협조. 「벼 드문모 심기 재배기술 - 3. 모내기」. 공공누리 제2유형 · 발췌·무음·재압축.'
+ id:'machine-2022',kind:'video',src:'assets/research/rice-machine-2022.mp4',webm:'assets/research/rice-machine-2022.webm',poster:'assets/research/rice-machine-2022.jpg',title:'기계로 모를 심는 모습',date:'2022년 제작',place:'국내 벼농사 사례 · 상세 촬영지 미표기',caption:'25초 관찰 영상 · 무음 발췌. 사람과 기계가 하는 일을 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpClipNo=3&mvpNo=823',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립식량과학원 협조. 「벼 드문모 심기 재배기술 - 3. 모내기」. 공공누리 제2유형 · 발췌·무음·재압축.'
 }];
 LABS.grow.sources=[{
  id:'greenhouse-photo',kind:'image',src:PHOTOS.grow.src,title:'비닐하우스 내부 사진',date:'2020년 5월 9일 촬영',place:'대한민국 · 상세 촬영지 미표기',caption:'작물이 자라는 곳 주변의 시설을 찾아 표시해요.',sourceUrl:PHOTOS.grow.sourceUrl,sourceName:'Wikimedia Commons 원문',credit:PHOTOS.grow.creditLine+' · 크기 축소.'
 },{
- id:'greenhouse-2017',kind:'video',src:'assets/research/greenhouse-2017.mp4',poster:'assets/research/greenhouse-2017.jpg',title:'온실을 관리하는 모습',date:'2017년 제작',place:'우리나라 온실 사례 · 일부 장면: 충남 부여',caption:'23초 관찰 영상 · 여러 구간 발췌·연결 편집·무음 처리. 작물 곁의 측정 장치, 물 공급 관, 온실 통로를 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpNo=1285',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립농업과학원 협조. 「ICT융복합 스마트팜 장비 표준화」. 공공누리 제2유형 · 발췌·무음·재압축.'
+ id:'greenhouse-2017',kind:'video',src:'assets/research/greenhouse-2017.mp4',webm:'assets/research/greenhouse-2017.webm',poster:'assets/research/greenhouse-2017.jpg',title:'온실을 관리하는 모습',date:'2017년 제작',place:'우리나라 온실 사례 · 일부 장면: 충남 부여',caption:'23초 관찰 영상 · 여러 구간 발췌·연결 편집·무음 처리. 작물 곁의 측정 장치, 물 공급 관, 온실 통로를 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpNo=1285',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립농업과학원 협조. 「ICT융복합 스마트팜 장비 표준화」. 공공누리 제2유형 · 발췌·무음·재압축.'
 }];
 
 LABS.rice.reference=false;LABS.maps.reference=false;LABS.grow.reference=true;
@@ -714,7 +835,7 @@ return Object.freeze({LABS});
 })();
 
 // src/research-model.js
-const __mod10=(()=>{
+const __mod11=(()=>{
 
 const RESEARCH_KEY='deulbit-evidence-v2';
 const clean=(value,max=1600)=>typeof value==='string'?value.slice(0,max):'';
@@ -782,9 +903,9 @@ return Object.freeze({RESEARCH_KEY, escapeHTML, restoreResearch, createPin, poin
 })();
 
 // src/research.js
-const __mod8=(()=>{
-const {LABS}=__mod9;
-const {RESEARCH_KEY, escapeHTML, restoreResearch, createPin, pointOnImage, pinVisibleInSwipe, hasEvidence, readyToCompare, collectEvidence, finishComparison, buildResearchHTML}=__mod10;
+const __mod9=(()=>{
+const {LABS}=__mod10;
+const {RESEARCH_KEY, escapeHTML, restoreResearch, createPin, pointOnImage, pinVisibleInSwipe, hasEvidence, readyToCompare, collectEvidence, finishComparison, buildResearchHTML}=__mod11;
 
 
 
@@ -826,7 +947,7 @@ function createResearch({mount=document.body,getName=()=>'',onCollected=()=>{},o
   const titleHTML=`<div class="research-source-title"><span class="source-dot dot-${index}"></span><b>${esc(title)}</b></div>`;
   const error=`<div class="research-media-error" hidden>자료를 불러오지 못했어요.<br>단서를 수집하려면 사진·영상이 열려야 해요.<br><a href="${esc(source.sourceUrl||'#')}" target="_blank" rel="noopener noreferrer">자료 원문 열기 ↗</a></div>`;
   const collectedNote=context.type==='compare'&&!overlay?`<div class="research-collected-note"><b>${eraLabel(eras[index])}에 내가 찾은 단서</b><p>${esc(record()[eras[index]].observation)}</p></div>`:'';
-  if(source.kind==='video')return `<section class="research-source is-video" data-source="${esc(source.id)}">${titleHTML}<div class="research-video-wrap"><video controls playsinline preload="metadata" ${source.poster?`poster="${esc(source.poster)}"`:''} aria-label="${esc(source.title)}"><source src="${esc(source.src||'')}" type="video/mp4"></video>${error}</div><p class="research-video-tip">▷ 재생하고, 멈춰서 자세히 살펴봐요.</p>${sourceFoot(source)}${collectedNote}</section>`;
+  if(source.kind==='video')return `<section class="research-source is-video" data-source="${esc(source.id)}">${titleHTML}<div class="research-video-wrap"><video controls playsinline preload="metadata" ${source.poster?`poster="${esc(source.poster)}"`:''} aria-label="${esc(source.title)}">${source.webm?`<source src="${esc(source.webm)}" type="video/webm">`:''}<source src="${esc(source.src||'')}" type="video/mp4"></video>${error}</div><p class="research-video-tip">▷ 재생하고, 멈춰서 자세히 살펴봐요.</p>${sourceFoot(source)}${collectedNote}</section>`;
   return `<section class="research-source" data-source="${esc(source.id)}">${titleHTML}<div class="research-source-window" tabindex="0" aria-label="${esc(source.title)}${canPin?'. 사진에서 단서를 찾은 곳을 누르세요.':''}"><div class="research-scroll-space"><div class="research-photo-plane ${canPin?'can-pin':''}" data-source-index="${index}" data-can-pin="${canPin}"><img src="${esc(source.src||'')}" alt="${esc(source.title)}" draggable="false">${overlay?`<img class="research-overlay-image" src="${esc(lab().sources[1]?.src||'')}" alt="${esc(lab().sources[1]?.title||'최근 자료')}" draggable="false"><span class="research-swipe-line" aria-hidden="true"></span>`:''}<div class="research-pins"></div></div></div>${error}</div>${sourceFoot(source)}${collectedNote}</section>`;
  }
  function toolbar(showImages,canSwipe=false){return `<div class="research-toolbar"><p>${context.type==='encounter'&&context.canCollect&&showImages?'사진·지도에서 단서를 찾은 곳에 표시할 수 있어요.':showImages?'크게 보거나 움직여서 자세히 살펴봐요.':'영상을 재생하고 멈추며 자세히 살펴봐요.'}</p><div class="research-view-buttons" ${showImages?'':'hidden'}>${canSwipe?`<button data-action="split" class="${mode==='split'?'active':''}">나란히</button><button data-action="swipe" class="${mode==='swipe'?'active':''}">겹쳐 보기</button>`:''}<button data-action="zoom-out" aria-label="사진 축소">−</button><span class="research-zoom-label">${Math.round(zoom*100)}%</span><button data-action="zoom-in" aria-label="사진 확대">＋</button><button data-action="reset-view" aria-label="사진 크기와 위치 처음으로">↺</button></div></div>`;}
@@ -904,9 +1025,14 @@ function createResearch({mount=document.body,getName=()=>'',onCollected=()=>{},o
   const showError=(node,sourceId)=>{if(token!==viewToken)return;loaded.delete(sourceId);node.hidden=true;const error=node.closest('.research-source')?.querySelector('.research-media-error');if(error)error.hidden=false;updateCollectButton();status('자료가 열리지 않아 단서를 수집할 수 없어요. 원문을 확인하거나 다시 만나 보세요.');};
   $$('video').forEach(video=>{
    const sourceId=video.closest('[data-source]').dataset.source;
-   for(const name of ['loadeddata','canplay'])video.addEventListener(name,()=>markReady(sourceId));
-   video.addEventListener('error',()=>showError(video,sourceId));video.querySelector('source')?.addEventListener('error',()=>showError(video,sourceId));
-   if(video.readyState>=2)markReady(sourceId);
+   const sources=[...video.querySelectorAll('source')],failed=new Set();
+   const ready=()=>{if(token!==viewToken)return;video.hidden=false;const error=video.closest('.research-source')?.querySelector('.research-media-error');if(error)error.hidden=true;markReady(sourceId);};
+   for(const name of ['loadeddata','canplay'])video.addEventListener(name,ready);
+   video.addEventListener('error',()=>showError(video,sourceId));
+   // A browser may reject one format and then load the next source. Do not
+   // hide a working fallback when only the first source reports an error.
+   for(const source of sources)source.addEventListener('error',()=>{failed.add(source);if(failed.size===sources.length&&video.readyState<2)showError(video,sourceId);});
+   if(video.readyState>=2)ready();
   });
   $$('.research-photo-plane').forEach(plane=>{
    const image=plane.querySelector('img'),sourceId=plane.closest('[data-source]').dataset.source;
@@ -1013,12 +1139,14 @@ return Object.freeze({createResearch});
 // src/game.js
 const __mod0=(()=>{
 const {WIDTH, HEIGHT, AVATARS, NPCS, QUESTS, MAP_LABELS}=__mod1;
-const {snap, pathfind, walkable, advance, dist}=__mod2;
+const {snap, pathfind, NPC_STOPS, moveOnRoad, advance, dist}=__mod2;
 const {SAVE_KEY, fresh, restore, currentQuest, mark, ready, recordComparison, complete}=__mod3;
 const {createGait, updateGait, moveSpeed}=__mod4;
 const {createWalker}=__mod5;
-const {PHOTOS}=__mod7;
-const {createResearch}=__mod8;
+const {cameraFrame, viewScale}=__mod7;
+const {PHOTOS}=__mod8;
+const {createResearch}=__mod9;
+
 
 
 
@@ -1030,15 +1158,16 @@ const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c
 let hasSession=false;
 let gait=createGait(), walkingSpeed=0;
 const walker=createWalker(document.getElementById('player-art'));
-let state=fresh(),avatar=0,running=false,route=[],arrival=null,keys=new Set(),stick={x:0,y:0},camera={x:0,y:0},zoom=1,overview=false,last=0,lastMini=0,dialogue=null,typing=null,typed=false,traveling=false,sound=false,audioCtx=null,toastTimer=null,nearby=null;
-const npcList=NPCS.map(n=>({...n,...snap(n)})),images={past:$('world-past'),now:$('world-now')};
+let state=fresh(),avatar=0,running=false,route=[],arrival=null,keys=new Set(),stick={x:0,y:0},camera={x:0,y:0},zoom=1,overview=true,last=0,lastMini=0,dialogue=null,typing=null,typed=false,traveling=false,sound=false,audioCtx=null,toastTimer=null,nearby=null,routeLabel='';
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const npcList=NPCS.map(n=>({...n,...NPC_STOPS[n.id]})),images={past:$('world-past'),now:$('world-now')};
 let evidenceResident=null;
 const research=createResearch({getName:()=>state.name,
  onCollected:(id,era)=>{const q=QUESTS.find(q=>q.lab===id);if(!q)return;mark(state,q.id,'met',era);mark(state,q.id,'seen',era);save();updateQuest();tone('win');},
  onCompared:id=>{const q=QUESTS.find(q=>q.lab===id);if(!q)return;if(!recordComparison(state,q))return;research.close();closeDialogue();finishQuest(q,evidenceResident||npcList.find(n=>n.id===q.npc));},
  onTravel:era=>{research.close();travel(era);},
  onClose:()=>{keys.clear();resetStick();if(hasSession){syncEvidenceProgress();save();updateQuest();}}});
-function pauseForEvidence(){route=[];arrival=null;keys.clear();resetStick();$('destination').hidden=true;closeDialogue();}
+function pauseForEvidence(){route=[];arrival=null;clearRoute();keys.clear();resetStick();$('destination').hidden=true;closeDialogue();}
 function meetResident(n){
  evidenceResident=n;pauseForEvidence();
  if(!state.intro){state.intro=true;save();}
@@ -1060,7 +1189,7 @@ AVATARS.forEach((a,i)=>{const b=document.createElement('button');b.className='av
 $('new-game').onclick=()=>setScreen('create-screen');$('back-title').onclick=()=>setScreen('title-screen');$('continue-game').onclick=()=>{const s=saved();if(s){state=s;start()}};$('start-game').onclick=()=>{research.reset();hasSession=true;state=fresh(avatar,$('detective-name').value);save();start();toast('부엉 박사에게 다가가서 인사해 볼까요?')};
 $('home-button').onclick=()=>{if(traveling)return;save();setScreen('title-screen');updateContinue()};
 function syncEvidenceProgress(){const records=research.records();for(const q of QUESTS){const r=records[q.lab];state.progress[q.id]={met:['past','now'].filter(e=>r?.[e]?.collected),seen:['past','now'].filter(e=>r?.[e]?.collected),compared:!!r?.completed};}state.completed=QUESTS.filter(q=>ready(state,q)&&state.progress[q.id].compared).map(q=>q.id);state.ending=state.ending&&state.completed.length===QUESTS.length;}
-function start(){syncEvidenceProgress();save();gait=createGait();walkingSpeed=0;hasSession=true;Object.assign(state,snap(state));route=[];arrival=null;traveling=false;overview=false;avatarArt($('player-art'),state.avatar);$('player-name').textContent=state.name;setScreen('game-screen');buildActors();renderWorld();updateQuest();updateCamera(true);updateMinimap();last=performance.now();}
+function start(){syncEvidenceProgress();save();gait=createGait();walkingSpeed=0;hasSession=true;Object.assign(state,snap(state));route=[];arrival=null;traveling=false;overview=true;clearRoute();avatarArt($('player-art'),state.avatar);$('player-name').textContent=state.name;setScreen('game-screen');buildActors();renderWorld();updateQuest();updateCamera(true);updateMinimap();last=performance.now();}
 function buildActors(){const root=$('actors');root.replaceChildren();for(const n of npcList){const b=document.createElement('button');b.className='actor npc';b.id='npc-'+n.id;b.style.left=n.x+'px';b.style.top=n.y+'px';b.style.zIndex=String(10+Math.floor(n.y/100));b.setAttribute('aria-label',`${n.name}에게 걸어가 대화하기`);b.innerHTML=`<div class="actor-shadow"></div><span class="npc-marker quiet">···</span><span class="sprite cast-${n.art}"></span><span class="actor-name">${n.name}</span>`;b.addEventListener('pointerdown',e=>e.stopPropagation());b.onclick=e=>{e.stopPropagation();go(n,()=>talk(n))};root.append(b)}}
 function progress(q){return state.progress[q.id]}
 function goal(){if(!state.intro)return {type:'npc',...npcList.find(n=>n.id==='owl')};const q=currentQuest(state);if(!q)return {type:'npc',...npcList.find(n=>n.id==='owl')};const n=npcList.find(n=>n.id===q.npc);if(ready(state,q))return {type:'npc',...n};if(progress(q).seen.includes(state.era))return {type:'era',...n,name:'다른 시대로 이동'};return {type:'npc',...n};}
@@ -1072,7 +1201,7 @@ function updateQuest(){
  else{$('quest-chapter').textContent=state.ending?'탐정단 인증 완료':'최종 보고';$('quest-title').textContent=state.ending?'비교 단서 수집 완료!':'부엉 박사에게 보고하기';$('quest-instruction').textContent='농사 방법과 땅의 쓰임을 비교한 단서 카드를 수첩에서 확인해요.';$('quest-steps').innerHTML='<span class="quest-step done">✓ 두 가지 비교 카드</span>';}
  renderWorld();
 }
-function say(n,pages,onDone=null,options={}){route=[];arrival=null;keys.clear();resetStick();clearInterval(typing);dialogue={n,pages,index:0,onDone,...options};$('dialogue').hidden=false;$('controls').hidden=true;$('speaker').textContent=n.name;$('dialogue-tag').textContent=n.role||'들빛마을';avatarArt($('portrait'),n.art??7);$('dialogue-choices').replaceChildren();showPage();}
+function say(n,pages,onDone=null,options={}){route=[];arrival=null;clearRoute();keys.clear();resetStick();clearInterval(typing);dialogue={n,pages,index:0,onDone,...options};$('dialogue').hidden=false;$('controls').hidden=true;$('speaker').textContent=n.name;$('dialogue-tag').textContent=n.role||'들빛마을';avatarArt($('portrait'),n.art??7);$('dialogue-choices').replaceChildren();showPage();}
 function showPage(){const d=dialogue;if(!d)return;const text=d.pages[d.index];$('dialogue-text').textContent='';$('page-count').textContent=`${d.index+1} / ${d.pages.length}`;$('dialogue-next').hidden=false;$('dialogue-next').textContent=d.index===d.pages.length-1?(d.lastLabel||'이야기 마치기 ✓'):'다음 이야기 ▸';$('dialogue-choices').replaceChildren();typed=false;let count=0;clearInterval(typing);typing=setInterval(()=>{if(!dialogue){clearInterval(typing);return}count+=2;$('dialogue-text').textContent=text.slice(0,count);if(count>=text.length){typed=true;clearInterval(typing)}},18);}
 function reveal(){if(!dialogue)return;clearInterval(typing);$('dialogue-text').textContent=dialogue.pages[dialogue.index];typed=true;}
 $('dialogue-next').onclick=()=>{if(!dialogue)return;if(!typed){reveal();return}if(dialogue.index<dialogue.pages.length-1){dialogue.index++;showPage()}else{const fn=dialogue.onDone;closeDialogue();fn?.()}};
@@ -1088,20 +1217,48 @@ function talk(n){
 
 function finishQuest(q,n){if(!complete(state,q))return;save();tone('win');confetti();const next=currentQuest(state);say({...npcList.find(n=>n.id==='owl'),role:'비교 단서 카드 완성'},['과거와 현재의 실제 자료를 근거로 비교 카드를 완성했구나! 네가 모은 단서와 생각은 수첩에 남아 있어.',next?`다음 의뢰는 ‘${next.title}’이야. ${npcList.find(n=>n.id===next.npc).name}을 찾아가렴.`:'두 비교 카드를 모두 모았구나! 나에게 돌아와 최종 보고를 해 주렴.'],()=>{updateQuest();save();},{lastLabel:next?'다음 주민 만나러 가기 →':'부엉 박사에게 보고하기 →'});updateQuest()}
 function showEnding(){const records=research.records();showPanel('탐정단 최종 보고',`<div class="complete-badge">🏅</div><h2 class="complete-text">시간의 단서를 모은 탐정!</h2><p class="complete-text"><b>${escape(state.name)}</b>, 실제 자료 네 장에서 두 가지 비교 카드를 완성했어요.</p>${QUESTS.map(q=>`<article class="journal-entry"><h3>✓ ${escape(q.title)}</h3><p>${escape(records[q.lab]?.comparison||'수첩에서 비교 기록을 확인해요.')}</p></article>`).join('')}<p class="small">농사 방법과 땅의 쓰임은 지역마다 다르게 달라질 수 있어요. 모든 들이 똑같이 바뀌는 것은 아니에요.</p><div class="title-actions"><button id="ending-notebook" class="button primary">내가 모은 비교 카드 보기 ▤</button><button id="certificate" class="button secondary">탐정 인증서 저장 ↓</button><button id="freeplay" class="button secondary">마을 더 둘러보기</button></div>`);$('ending-notebook').onclick=()=>{$('panel').close();research.openNotebook();};$('certificate').onclick=download;$('freeplay').onclick=()=>$('panel').close();}
-function go(target,fn=null){if(!running||dialogue||traveling||$('panel').open||research.isOpen())return;const dest=snap(target);const next=pathfind(state,dest);if(!next.length&&dist(state,dest)>40){toast('길이 이어진 곳을 눌러 주세요.');return}route=next;arrival=fn;$('destination').style.left=dest.x+'px';$('destination').style.top=dest.y+'px';$('destination').hidden=false;if(!route.length){$('destination').hidden=true;const cb=arrival;arrival=null;cb?.()} }
+function clearRoute(){ $('route-line').setAttribute('d','');$('route-shadow').setAttribute('d','');$('walk-status').hidden=true; }
+function drawRoute(){const d=route.length?'M '+state.x+' '+state.y+' L '+route.map(p=>p.x+' '+p.y).join(' L '):'';$('route-line').setAttribute('d',d);$('route-shadow').setAttribute('d',d);}
+function viewMode(wide){overview=wide;for(const [id,active] of [['view-overview',wide],['view-walk',!wide]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',String(active));}$('zoom-button').textContent=wide?'＋':'−';$('zoom-button').setAttribute('aria-label',wide?'가까이 걷기로 바꾸기':'마을 전체 보기');$('game-screen').classList.toggle('walking-view',!wide);}
+function stopWalking(){route=[];arrival=null;walkingSpeed=0;keys.clear();resetStick();$('destination').hidden=true;clearRoute();save();}
+function go(target,fn=null){
+ if(!running||dialogue||traveling||$('panel').open||research.isOpen())return;
+ let dest=snap(target),next=pathfind(state,dest);
+ if(fn&&dist(state,target)<55){route=[];arrival=null;clearRoute();$('destination').hidden=true;fn();return;}
+ if(fn&&next.length){let remaining=38;while(next.length&&remaining>0){const end=next.at(-1),previous=next.length>1?next.at(-2):state,length=dist(previous,end);if(length<=remaining){next.pop();remaining-=length;}else{const t=(length-remaining)/length;next[next.length-1]={x:previous.x+(end.x-previous.x)*t,y:previous.y+(end.y-previous.y)*t};remaining=0;}}dest=next.at(-1)||{x:state.x,y:state.y};}
+ if(!next.length&&dist(state,dest)>12){toast('길이 이어진 곳을 눌러 주세요.');return;}
+ route=next;arrival=fn;routeLabel=target.name?target.name+'에게 가는 길':'길을 따라 산책 중';
+ if(dist(target,dest)>36&&!fn)toast('가장 가까운 길로 걸어갈게요.');
+ $('destination').style.left=dest.x+'px';$('destination').style.top=dest.y+'px';$('destination').hidden=!route.length;
+ if(route.length){viewMode(false);drawRoute();$('walk-heading').textContent=routeLabel;$('walk-status').hidden=false;}
+ else{clearRoute();const cb=arrival;arrival=null;cb?.();}
+}
 function viewportPoint(e){const rect=$('viewport').getBoundingClientRect();return {x:(e.clientX-rect.left-camera.x)/zoom,y:(e.clientY-rect.top-camera.y)/zoom}}
 $('viewport').addEventListener('pointerdown',e=>{if(e.target.closest('.actor,.clue'))return;if(e.button!==0&&e.pointerType==='mouse')return;const p=viewportPoint(e);if(p.x<0||p.x>WIDTH||p.y<0||p.y>HEIGHT)return;go(p);$('viewport').focus({preventScroll:true})});
 function resetStick(){stick={x:0,y:0};$('stick').style.transform='translate(0,0)'}let joyId=null;
 $('joystick').addEventListener('pointerdown',e=>{if(dialogue||traveling||research.isOpen())return;joyId=e.pointerId;$('joystick').setPointerCapture(e.pointerId);updateStick(e);e.preventDefault()});
-function updateStick(e){if(e.pointerId!==joyId)return;const r=$('joystick').getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,d=Math.hypot(dx,dy),max=30;stick={x:dx/(d>max?d:max),y:dy/(d>max?d:max)};$('stick').style.transform=`translate(${stick.x*max}px,${stick.y*max}px)`;route=[];arrival=null;$('destination').hidden=true;}
+function updateStick(e){if(e.pointerId!==joyId)return;const r=$('joystick').getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,d=Math.hypot(dx,dy),max=30;stick={x:dx/(d>max?d:max),y:dy/(d>max?d:max)};$('stick').style.transform=`translate(${stick.x*max}px,${stick.y*max}px)`;route=[];arrival=null;clearRoute();viewMode(false);$('destination').hidden=true;}
 $('joystick').addEventListener('pointermove',updateStick);for(const event of ['pointerup','pointercancel','lostpointercapture'])$('joystick').addEventListener(event,()=>{joyId=null;resetStick();save()});
-window.addEventListener('keydown',e=>{if(!running||$('panel').open||traveling||research.isOpen())return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','w','a','s','d','W','A','S','D'].includes(e.key)){if(dialogue)return;e.preventDefault();keys.add(e.key.toLowerCase());route=[];arrival=null;$('destination').hidden=true}if((e.key===' '||e.key==='e'||e.key==='E')&&!e.repeat){e.preventDefault();if(dialogue){if(!$('dialogue-next').hidden)$('dialogue-next').click()}else{$('interact').click()}}if(e.key==='Escape'&&dialogue)closeDialogue()});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();resetStick();save()});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();resetStick();save()}});
+window.addEventListener('keydown',e=>{if(!running||$('panel').open||traveling||research.isOpen())return;if(e.target.closest?.('input,textarea,select,[contenteditable="true"]'))return;if(!dialogue&&e.target.closest?.('button')&&(e.key===' '||e.key==='Enter'||e.key.toLowerCase()==='e'))return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','w','a','s','d','W','A','S','D'].includes(e.key)){if(dialogue)return;e.preventDefault();keys.add(e.key.toLowerCase());route=[];arrival=null;clearRoute();viewMode(false);$('destination').hidden=true}if((e.key===' '||e.key==='e'||e.key==='E')&&!e.repeat){e.preventDefault();if(dialogue){if(!$('dialogue-next').hidden)$('dialogue-next').click()}else{$('interact').click()}}if(e.key==='Escape'&&dialogue)closeDialogue()});window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();resetStick();save()});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();resetStick();save()}});
 function interactions(){if(dialogue||traveling||research.isOpen())return;nearby=[...npcList].sort((a,b)=>dist(state,a)-dist(state,b)).find(n=>dist(state,n)<65)||null;$('interact').disabled=!nearby;$('interact').querySelector('span').textContent=nearby?'주민 만나기':'…';$('interact').querySelector('small').textContent=nearby?nearby.name:'주민에게 가까이 가요';}
 $('interact').onclick=()=>{if(!nearby||dialogue||traveling||research.isOpen())return;talk(nearby)};
-async function travel(era){if(!state.intro||traveling||era===state.era)return;if(dialogue)closeDialogue();keys.clear();route=[];arrival=null;resetStick();traveling=true;$('destination').hidden=true;$('time-overlay').hidden=false;$('controls').hidden=true;tone('time');await new Promise(r=>setTimeout(r,650));state.era=era;save();renderWorld();updateQuest();await new Promise(r=>setTimeout(r,650));$('time-overlay').hidden=true;$('controls').hidden=false;traveling=false;renderWorld();toast(era==='past'?'수십 년 전의 들빛마을에 도착했어요.':'오늘의 들빛마을에 도착했어요.');}
-$('era-past').onclick=()=>travel('past');$('era-now').onclick=()=>travel('now');$('track-button').onclick=()=>{const g=goal();if(g.type==='era'){toast('위의 과거·현재 버튼을 눌러 다른 시대로 이동해요.');return}toast(`${g.name}까지 길을 따라 걸어가요.`);go(g,()=>talk(npcList.find(n=>n.id===g.id)))};$('quest-fold').onclick=()=>{const folded=$('quest-card').classList.toggle('folded');$('quest-fold').textContent=folded?'+':'−';$('quest-fold').setAttribute('aria-label',folded?'미션 펼치기':'미션 접기')};$('zoom-button').onclick=()=>{overview=!overview;$('zoom-button').textContent=overview?'+':'−';resize();updateCamera(true)};$('minimap').onclick=e=>{const r=$('minimap').getBoundingClientRect();go({x:(e.clientX-r.left)/r.width*WIDTH,y:(e.clientY-r.top)/r.height*HEIGHT})};
-function resize(){const w=$('viewport').clientWidth,h=$('viewport').clientHeight;zoom=overview?Math.min(w/WIDTH,h/HEIGHT):w<650?1.15:h<500?1.25:1.4;}
-function updateCamera(immediate=false){const w=$('viewport').clientWidth,h=$('viewport').clientHeight;let targetX=w*.5-state.x*zoom,targetY=h*(dialogue?.36:.53)-state.y*zoom;targetX=WIDTH*zoom<w?(w-WIDTH*zoom)/2:Math.min(0,Math.max(w-WIDTH*zoom,targetX));targetY=HEIGHT*zoom<h?(h-HEIGHT*zoom)/2:Math.min(0,Math.max(h-HEIGHT*zoom,targetY));const lerp=immediate?1:.12;camera.x+=(targetX-camera.x)*lerp;camera.y+=(targetY-camera.y)*lerp;$('world').style.transform=`translate(${camera.x.toFixed(2)}px,${camera.y.toFixed(2)}px) scale(${zoom})`;$('player').style.left=state.x+'px';$('player').style.top=state.y+'px';const g=goal(),gx=g.x*zoom+camera.x,gy=g.y*zoom+camera.y;const off=g.type!=='era'&&!dialogue&&(gx<20||gx>w-20||gy<15||gy>h-50);$('waypoint').hidden=!off;if(off){const angle=Math.atan2(gy-h/2,gx-w/2);$('waypoint').style.left=Math.max(100,Math.min(w-120,gx))+'px';$('waypoint').style.top=65+Math.max(160,Math.min(h-150,gy))+'px';$('waypoint').style.right='auto';$('waypoint').querySelector('span').style.transform=`rotate(${angle}rad)`}}
+async function travel(era){if(!state.intro||traveling||era===state.era)return;if(dialogue)closeDialogue();keys.clear();route=[];arrival=null;clearRoute();resetStick();traveling=true;$('destination').hidden=true;$('time-overlay').hidden=false;$('controls').hidden=true;tone('time');await new Promise(r=>setTimeout(r,650));state.era=era;save();renderWorld();updateQuest();await new Promise(r=>setTimeout(r,650));$('time-overlay').hidden=true;$('controls').hidden=false;traveling=false;renderWorld();toast(era==='past'?'수십 년 전의 들빛마을에 도착했어요.':'오늘의 들빛마을에 도착했어요.');}
+$('era-past').onclick=()=>travel('past');$('era-now').onclick=()=>travel('now');
+$('track-button').onclick=()=>{const g=goal();if(g.type==='era'){toast('위의 과거·현재 버튼을 눌러 다른 시대로 이동해요.');return;}go(g,()=>talk(npcList.find(n=>n.id===g.id)));};
+$('quest-fold').onclick=()=>{const folded=$('quest-card').classList.toggle('folded');$('quest-fold').textContent=folded?'+':'−';$('quest-fold').setAttribute('aria-label',folded?'미션 펼치기':'미션 접기');};
+$('zoom-button').onclick=()=>viewMode(!overview);$('view-overview').onclick=()=>viewMode(true);$('view-walk').onclick=()=>viewMode(false);$('stop-walking').onclick=stopWalking;
+$('minimap').onclick=e=>{const r=$('minimap').getBoundingClientRect();go({x:(e.clientX-r.left)/r.width*WIDTH,y:(e.clientY-r.top)/r.height*HEIGHT})};
+
+function resize(){if(overview)zoom=viewScale($('viewport').clientWidth,$('viewport').clientHeight,true);viewMode(overview);}
+function updateCamera(immediate=false,dt=1/60){
+ const w=$('viewport').clientWidth,h=$('viewport').clientHeight;
+ const next=cameraFrame({...camera,zoom},state,w,h,{overview,dialogue:!!dialogue,dt,immediate,reducedMotion});camera={x:next.x,y:next.y};zoom=next.zoom;
+ $('world').style.transform=`translate(${camera.x.toFixed(2)}px,${camera.y.toFixed(2)}px) scale(${zoom})`;
+ $('player').style.left=state.x+'px';$('player').style.top=state.y+'px';$('player').style.zIndex=String(10+Math.floor(state.y/100));
+ const g=goal(),gx=g.x*zoom+camera.x,gy=g.y*zoom+camera.y;
+ const off=g.type!=='era'&&!dialogue&&!research.isOpen()&&(gx<20||gx>w-20||gy<15||gy>h-50);$('waypoint').hidden=!off;
+ if(off){const angle=Math.atan2(gy-h/2,gx-w/2),card=$('quest-card');let left=Math.max(100,Math.min(w-120,gx)),top=$('viewport').offsetTop+Math.max(160,Math.min(h-150,gy));if(left<card.offsetLeft+card.offsetWidth+50&&top<card.offsetTop+card.offsetHeight+25)top=Math.min($('viewport').offsetTop+h-145,card.offsetTop+card.offsetHeight+28);$('waypoint').style.left=left+'px';$('waypoint').style.top=top+'px';$('waypoint').style.right='auto';$('waypoint').querySelector('span').style.transform=`rotate(${angle}rad)`;}
+}
 function updateMinimap(){const c=$('minimap'),x=c.getContext('2d'),sx=c.width/WIDTH,sy=c.height/HEIGHT;x.clearRect(0,0,c.width,c.height);const im=images[state.era];if(im.complete&&im.naturalWidth)x.drawImage(im,0,0,c.width,c.height);for(const n of npcList){x.beginPath();x.fillStyle=n.id==='owl'?'#f7e4b0':'#fff9e9';x.arc(n.x*sx,n.y*sy,2,0,Math.PI*2);x.fill()}const g=goal();if(g.type!=='era'){x.beginPath();x.fillStyle='#f5c645';x.strokeStyle='#fff9dd';x.lineWidth=2;x.arc(g.x*sx,g.y*sy,4.5,0,Math.PI*2);x.fill();x.stroke()}x.beginPath();x.fillStyle='#3274a1';x.strokeStyle='#fff';x.lineWidth=2;x.arc(state.x*sx,state.y*sy,4,0,Math.PI*2);x.fill();x.stroke();const w=$('viewport').clientWidth,h=$('viewport').clientHeight;x.strokeStyle='#fff9dfb8';x.lineWidth=1;x.strokeRect(-camera.x/zoom*sx,-camera.y/zoom*sy,w/zoom*sx,h/zoom*sy)}
 function frame(time){
  const dt=Math.min(.04,(time-last)/1000||.016);last=time;
@@ -1115,11 +1272,10 @@ function frame(time){
    if(vx||vy){
     const len=Math.max(1,Math.hypot(vx,vy));vx/=len;vy/=len;
     const dx=vx*walkingSpeed*dt,dy=vy*walkingSpeed*dt;
-    if(walkable(state.x+dx,state.y))state.x+=dx;
-    if(walkable(state.x,state.y+dy))state.y+=dy;
+    moveOnRoad(state,dx,dy);
    }else if(route.length){
     advance(state,route,walkingSpeed*dt);
-    if(!route.length){$('destination').hidden=true;save();const fn=arrival;arrival=null;fn?.();}
+    if(!route.length){$('destination').hidden=true;clearRoute();save();const fn=arrival;arrival=null;fn?.();}
    }
    interactions();
   }else{walkingSpeed=0;}
@@ -1128,9 +1284,11 @@ function frame(time){
   $('player').classList.toggle('walking',gait.moving);
   $('player').classList.remove('facing-left');
   walker.render(gait);
-  updateCamera();
+  updateCamera(false,dt);
+  $('game-screen').classList.toggle('on-the-move',gait.moving&&!dialogue&&!research.isOpen());
   if(time-lastMini>140){
    updateMinimap();lastMini=time;
+   if(route.length)drawRoute();
    const nearest=[...npcList].sort((a,b)=>dist(state,a)-dist(state,b))[0];
    $('location').textContent=nearest&&dist(state,nearest)<230?nearest.role.replace(' 이야기','')+' 주변':'들빛마을 산책길';
   }
@@ -1140,7 +1298,7 @@ function frame(time){
 function showPanel(label,html){keys.clear();resetStick();$('panel-label').textContent=label;$('panel-content').innerHTML=html;if(!$('panel').open)$('panel').showModal()}
 $('panel-close').onclick=()=>$('panel').close();$('panel').addEventListener('click',e=>{if(e.target===$('panel')){const r=$('panel').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('panel').close()}});
 $('journal-button').onclick=()=>{if(traveling)return;pauseForEvidence();research.openNotebook();};
-$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 바닥 누르기, 조이스틱, 방향키·WASD로 이동해요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.0 · 주민과 실제 자료 연결</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
+$('settings-button').onclick=()=>{if(traveling)return;showPanel('탐험 안내',`<h2>주민에게 시간의 단서를 받아요</h2><p><b>① 주민 만나기</b> · 주민을 누르면 길을 따라 가까이 걸어가요. 옆에서 ‘주민 만나기’를 눌러도 돼요. 실제 자료가 바로 열립니다.</p><p><b>② 과거 단서 수집</b> · 사진·영상에서 직접 본 모습을 한 줄로 쓰고 단서를 수집해요. 사진에는 찾은 곳을 표시할 수 있어요.</p><p><b>③ 현재 단서 수집</b> · 시간을 바꾸고 같은 주민을 다시 만나 다른 시기의 자료를 받아요.</p><p><b>④ 두 자료 비교</b> · 두 단서를 나란히 살펴보고 달라진 모습과 그 근거를 적어 비교 카드를 완성해요.</p><p><b>보조 자료</b> · 초록 이모는 현재 농업 시설의 사진·영상을 보여 줘요. 서로 다른 농장 자료이므로 같은 장소의 과거·현재라고 비교하지 않아요.</p><p><b>조작</b> · 길이나 주민을 누르면 도로를 따라 걸어가요. 조이스틱·방향키·WASD로도 움직일 수 있어요. 건물과 논밭으로는 들어갈 수 없어요. ‘마을 전체’로 길을 살펴보고 ‘가까이 걷기’로 풍경을 볼 수 있어요. E·스페이스로 주민을 만날 수 있어요. 수첩에서는 수집한 단서만 다시 볼 수 있어요.</p><div class="settings-row"><span>효과음</span><button id="sound-toggle" class="button secondary">${sound?'켜짐':'꺼짐'}</button></div><p class="small">마을 그림은 가상 배경이에요. 실제 자료의 지역·연도를 확인하며 관찰해요. 기록은 같은 기기에 저장됩니다. 버전 4.1 · 길 따라 걷는 마을 탐험</p>`);$('sound-toggle').onclick=()=>{sound=!sound;$('sound-toggle').textContent=sound?'켜짐':'꺼짐';tone();};};
 
 function download(){const c=document.createElement('canvas');c.width=1400;c.height=1000;const x=c.getContext('2d');x.fillStyle='#f8f4e5';x.fillRect(0,0,1400,1000);x.strokeStyle='#91b296';x.lineWidth=8;x.strokeRect(35,35,1330,930);x.textAlign='center';x.fillStyle='#849b76';x.font='bold 18px sans-serif';x.fillText('TIME TRAVEL DETECTIVES · CHAPTER 01',700,115);x.fillStyle='#305d4c';x.font='bold 56px sans-serif';x.fillText('들빛마을 시간 탐정 인증서',700,205);x.font='36px sans-serif';x.fillText(state.name+' 탐정',700,295);x.font='25px sans-serif';['손으로 모내기하는 사진과 기계 모내기 영상','대전 갑천 주변의 1970년·2021년 항공사진','과거와 현재의 실제 자료에서 네 단서를 모으고','두 가지 비교 카드에 관찰한 모습과 근거를 남겼습니다.'].forEach((t,i)=>x.fillText(t,700,390+i*62));x.fillStyle='#e8e8ce';x.fillRect(100,695,1200,130);x.fillStyle='#4b7158';x.font='23px sans-serif';x.fillText('환경을 이용하며 살아가는 모습은 다양하고,',700,747);x.fillText('지역마다 변화 모습도 다를 수 있습니다.',700,790);x.fillStyle='#8b987d';x.font='17px sans-serif';x.fillText('가상 마을 탐험 · 실제 자료 네 단서 · 두 비교 카드 완료',700,905);const a=document.createElement('a');a.download='들빛마을_시간탐정_인증서.png';a.href=c.toDataURL('image/png');document.body.append(a);a.click();a.remove();toast('인증서 이미지를 저장했어요.')}
 function confetti(){const root=$('confetti');root.replaceChildren();for(let i=0;i<35;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'%';p.style.background=['#f6cd6e','#98bf9a','#e99e88','#98c7cc'][i%4];p.style.animationDelay=Math.random()*.5+'s';p.style.rotate=Math.random()*360+'deg';root.append(p)}setTimeout(()=>root.replaceChildren(),3600)}

@@ -23,3 +23,13 @@ test('every resident comparison has two local dated evidence sources and supplem
  for(const q of QUESTS){const lab=LABS[q.lab];assert.ok(lab&&!lab.reference);assert.equal(lab.sources.length,2);const years=lab.sources.map(p=>Number(p.date.match(/\d{4}/)?.[0]));assert.ok(years[0]<years[1]);for(const p of lab.sources){assert.ok(p.sourceName&&p.sourceUrl.startsWith('https://')&&p.date&&p.place&&p.credit);const file=new URL(p.src,root);assert.ok(existsSync(file));const data=readFileSync(file);assert.ok(data.length>5000);if(p.kind==='video'){assert.equal(data.toString('ascii',4,8),'ftyp');assert.ok(existsSync(new URL(p.poster,root)));}else{assert.equal(data[0],0xff);assert.equal(data[1],0xd8);}}}
  assert.equal(LABS.grow.reference,true);
 });
+
+
+test('video evidence also includes an actual WebM fallback for browsers without MP4 decoding',()=>{
+ for(const lab of Object.values(LABS))for(const source of lab.sources.filter(source=>source.kind==='video')){
+  assert.ok(source.webm.endsWith('.webm'));
+  const bytes=readFileSync(new URL(source.webm,root));
+  assert.ok(bytes.length>5000);
+  assert.deepEqual([...bytes.subarray(0,4)],[0x1a,0x45,0xdf,0xa3]);
+ }
+});

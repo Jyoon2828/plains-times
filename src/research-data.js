@@ -12,12 +12,12 @@ LABS.maps.sources=[1970,2021].map(year=>({
 LABS.rice.sources=[{
  id:'hand-1989',kind:'image',src:'assets/research/rice-hand-1989.jpg',title:'손으로 모를 심는 모습',date:'1989년 5월 19일 기록',place:'경기도 김포',caption:'사진을 확대해서 손과 도구, 논의 모습을 관찰해요.',sourceUrl:'https://www.ehistory.go.kr/view/photo?mediadtl=105207&mediagbn=PG&mediaid=12634&mediasrcgbn=PT',sourceName:'e영상역사관 기록 사진',credit:'문화체육관광부 e영상역사관 · 공공누리 제4유형 · 사진 원본 그대로. 단서 표시는 별도 화면 요소.'
 },{
- id:'machine-2022',kind:'video',src:'assets/research/rice-machine-2022.mp4',poster:'assets/research/rice-machine-2022.jpg',title:'기계로 모를 심는 모습',date:'2022년 제작',place:'국내 벼농사 사례 · 상세 촬영지 미표기',caption:'25초 관찰 영상 · 무음 발췌. 사람과 기계가 하는 일을 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpClipNo=3&mvpNo=823',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립식량과학원 협조. 「벼 드문모 심기 재배기술 - 3. 모내기」. 공공누리 제2유형 · 발췌·무음·재압축.'
+ id:'machine-2022',kind:'video',src:'assets/research/rice-machine-2022.mp4',webm:'assets/research/rice-machine-2022.webm',poster:'assets/research/rice-machine-2022.jpg',title:'기계로 모를 심는 모습',date:'2022년 제작',place:'국내 벼농사 사례 · 상세 촬영지 미표기',caption:'25초 관찰 영상 · 무음 발췌. 사람과 기계가 하는 일을 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpClipNo=3&mvpNo=823',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립식량과학원 협조. 「벼 드문모 심기 재배기술 - 3. 모내기」. 공공누리 제2유형 · 발췌·무음·재압축.'
 }];
 LABS.grow.sources=[{
  id:'greenhouse-photo',kind:'image',src:PHOTOS.grow.src,title:'비닐하우스 내부 사진',date:'2020년 5월 9일 촬영',place:'대한민국 · 상세 촬영지 미표기',caption:'작물이 자라는 곳 주변의 시설을 찾아 표시해요.',sourceUrl:PHOTOS.grow.sourceUrl,sourceName:'Wikimedia Commons 원문',credit:PHOTOS.grow.creditLine+' · 크기 축소.'
 },{
- id:'greenhouse-2017',kind:'video',src:'assets/research/greenhouse-2017.mp4',poster:'assets/research/greenhouse-2017.jpg',title:'온실을 관리하는 모습',date:'2017년 제작',place:'우리나라 온실 사례 · 일부 장면: 충남 부여',caption:'23초 관찰 영상 · 여러 구간 발췌·연결 편집·무음 처리. 작물 곁의 측정 장치, 물 공급 관, 온실 통로를 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpNo=1285',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립농업과학원 협조. 「ICT융복합 스마트팜 장비 표준화」. 공공누리 제2유형 · 발췌·무음·재압축.'
+ id:'greenhouse-2017',kind:'video',src:'assets/research/greenhouse-2017.mp4',webm:'assets/research/greenhouse-2017.webm',poster:'assets/research/greenhouse-2017.jpg',title:'온실을 관리하는 모습',date:'2017년 제작',place:'우리나라 온실 사례 · 일부 장면: 충남 부여',caption:'23초 관찰 영상 · 여러 구간 발췌·연결 편집·무음 처리. 작물 곁의 측정 장치, 물 공급 관, 온실 통로를 살펴봐요.',sourceUrl:'https://www.nongsaro.go.kr/portal/ps/psb/psby/vodPlay.ps?menuId=PS65513&mvpNo=1285',sourceName:'농촌진흥청 농사로',credit:'농촌진흥청 · 국립농업과학원 협조. 「ICT융복합 스마트팜 장비 표준화」. 공공누리 제2유형 · 발췌·무음·재압축.'
 }];
 
 LABS.rice.reference=false;LABS.maps.reference=false;LABS.grow.reference=true;
